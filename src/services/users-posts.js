@@ -1,85 +1,86 @@
-import { doc, addDoc, collection, getDoc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, arrayUnion } from "firebase/firestore";
-import { db } from "./firebase";
+import { doc, addDoc, getDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "./firebase";
+
 /**
- * @param {{title: string, description: string, location: string, created_at: string, user_id: string, user_email: string, comments: string}} newPosts
+ * Función para guardar un post público en la base de datos.
+ * @param {{ title: string, description: string, location: string }} newPost
  * @return {Promise}
  **/
-
-import { getAuth } from "firebase/auth";
-import { comment } from "postcss";
 
 export async function savePublicPost({ title, description, location }) {
-  const auth = getAuth();
   const user = auth.currentUser;
-  if (user) {
-    const userId = user.uid; 
-    const userEmail = user.email ; 
-    const usersPosts = collection(db, 'posted-by-users');
-    await addDoc(usersPosts, {
-      title,
-      description,
-      location,
-      user_id: userId,
-      user_email: userEmail,
-      created_at: serverTimestamp(),
-      comments: []
-    });
-  } 
+
+  if (!user) {
+    console.error("Usuario no autenticado. No se puede guardar el post.");
+
+    return
+  }
+
+  const usersPosts = collection(db, 'posted-by-users');
+
+  await addDoc(usersPosts, {
+    title,
+    description,
+    location,
+    comments: [],
+    user_id: user.uid,
+    user_email: user.email,
+    created_at: serverTimestamp()
+  });
 }
 
 /**
- * @param {{comments: string, comment: string, created_at: string}} newComments
- * @return {Promise}
- **/
-
-export async function savePublicComment({postId, comment}) {
-  const publicComment = doc(db, 'posted-by-users', postId);
-  const readPost = await getDoc(publicComment);
-
-  if (readPost.exists()) {
-    await updateDoc(publicComment, {
-      comments: arrayUnion({
-        comment: comment
-      })
-    });
-  } else {
-    throw new Error('No se encontró el post con el ID: ', postId);
-  }
-}
-
+ * Función para leer los posts públicos de la base de datos.
+ * @param {Function} callback Función que se ejecuta cuando se reciben los posts. 
+ */
 export function readPublicPosts(callback){
     const usersPosts = collection(db, 'posted-by-users');
     const postQuery = query(usersPosts, orderBy('created_at', 'desc'));
 
-    onSnapshot(postQuery, snapshot => {
-        const posts = snapshot.docs.map(doc => {
-            return {
-                id: doc.id,
-                title: doc.data().title,
-                description: doc.data().description,
-                location: doc.data().location,
-                created_at: doc.data().created_at,
-                user_id: doc.data().user_id,
-                user_email: doc.data().user_email,
-                comments: doc.data().comments || []
-            }
-        });
-        callback(posts);
+    onSnapshot(postQuery, (snapshot) => {
+      const posts = snapshot.docs.map((doc) => {
+          return {
+              id: doc.id,
+              title: doc.data().title,
+              description: doc.data().description,
+              location: doc.data().location,
+              comments: doc.data().comments,
+              user_id: doc.data().user_id,
+              user_email: doc.data().user_email,
+              created_at: doc.data().created_at
+          }
+      });
+
+      callback(posts);
     });
 }
 
-export function readPublicComments(callback){
-  const userComments = collection(db, 'posted-by-users');
-  const commentQuery = query(userComments, orderBy('created_at', 'desc'));
+/**
+ * Función para obtener un post por su ID.
+ * @param {String} id ID del post a obtener.
+ * @returns {Promise<Object>} Objeto con los datos del post. 
+ */
+export async function getPostById(id){
+  try {
+    const profileRef = doc(db, `/posted-by-users/${id}`);
+    const profileDocument = await getDoc(profileRef);
 
-  onSnapshot(commentQuery, snapshot => {
-    const comments = snapshot.docs.map(doc => {
-      return {
-        id: doc.id,
-        comment: doc.data().comment,
-        comments: doc.data().comments
-      }
-    });
-    callback(comments);
-  })
+    if (!profileDocument.exists()) {
+      throw new Error(`No se encontró el perfil de usuario con ID: ${id}`);
+    }
+
+    return {
+      id: profileDocument.id,
+      title: profileDocument.data().title,
+      description: profileDocument.data().description,
+      location: profileDocument.data().location,
+      comments: profileDocument.data().comments,
+      user_id: profileDocument.data().user_id,
+      user_email: profileDocument.data().user_email,
+      created_at: profileDocument.data().created_at
+    };
+  } catch (error) {
+    console.error("Error al obtener el posteo:", error);
+    throw error;
+  }
 }

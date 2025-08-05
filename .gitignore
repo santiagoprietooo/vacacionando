@@ -39,3 +39,5 @@ dist-ssr/
 # Temporary and system files  
 *.tmp  
 Thumbs.db  
+
+updates.md

@@ -6,6 +6,7 @@ import LogIn from '../pages/LogIn.vue';
 import MyProfile from '../pages/MyProfile.vue';
 import MyProfileEdit from '../pages/MyProfileEdit.vue';
 import UserProfile from '../pages/UserProfile.vue';
+import PostView from '../pages/PostView.vue';
 
 import { subscribeToAuthChanges } from '../services/auth';
 
@@ -15,7 +16,8 @@ const routes = [
     { path: '/sign-in',          component: SignIn },
     { path: '/profile',          component: MyProfile,     meta: { requiresAuth: true } },
     { path: '/profile/edit',     component: MyProfileEdit, meta: { requiresAuth: true } },
-    { path: '/profile/:id',      component: UserProfile}
+    { path: '/profile/:id',      component: UserProfile, name: 'profile' },
+    { path: '/public_post/:id',  component: PostView, name: 'public_post' }
 ];
 
 const router = createRouter({

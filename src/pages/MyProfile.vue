@@ -1,11 +1,11 @@
 <script setup>
 import HeaderTitle from '../components/HeaderTitle.vue';
-import UserItemTitle from '../components/UserItemTitle.vue'
-import UserItemInfo from '../components/UserItemInfo.vue'
+import ReturnBtn from "../components/ReturnBtn.vue";
+import UserProfileComponent from '../components/UserProfileComponent.vue';
+import { Pencil } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
-import { subscribeToAuthChanges } from '../services/auth';
-import { Pencil, User } from 'lucide-vue-next';
 import { RouterLink } from 'vue-router';
+import { subscribeToAuthChanges } from '../services/auth';
 
 const loggedUser = ref({
     id: null,
@@ -16,48 +16,33 @@ const loggedUser = ref({
 });
 
 onMounted(() => {
-    subscribeToAuthChanges(newUserData => loggedUser.value = newUserData);  
+    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);  
 });
 </script>
 
 <template>
-    <section class="px-5 pt-5 pb-48 flex flex-col items-center">
-        <div class="flex flex-row justify-center gap-2">
-            <HeaderTitle>Mi Perfil</HeaderTitle>
+    <HeaderTitle text="Mi Perfil" >
+        <template #content-before>
+            <ReturnBtn />
+        </template>
+
+        <template #content-after>
             <RouterLink
                 to="/profile/edit"
                 class="p-2 flex justify-center items-center rounded-full transition-colors hover:bg-slate-600"
             >
                 <Pencil class="text-white size-5"/>
             </RouterLink>
-        </div>
+        </template>
+    </HeaderTitle>
 
-        <div class="
-            w-full flex flex-col mt-8 bg-slate-100 border-8 border-slate-100 rounded-xl
+    <section class="pb-48">
+        <template v-if="!loggedUser">
+            <p>Cargando...</p>
+        </template>
 
-            md:flex-row md:w-2/3
-        ">
-            <div class="
-                p-10 flex flex-col items-center justify-center bg-slate-500 rounded-s-md
-            ">
-                <User class="text-white size-24"/>
-            </div>
-            
-            <div class="flex flex-col bg-slate-100 text-black">
-                <ul class="px-2 pt-2 md:px-8">
-                    <UserItemTitle>Nombre:</UserItemTitle>
-                    <UserItemInfo>{{ loggedUser.displayName || "No definido todavía..." }}</UserItemInfo>
-                    
-                    <UserItemTitle>Correo Electrónico:</UserItemTitle>
-                    <UserItemInfo>{{ loggedUser.email || "No definido todavía..." }}</UserItemInfo>
-                    
-                    <UserItemTitle>Biografía:</UserItemTitle>
-                    <UserItemInfo>{{ loggedUser.bio || "No definido todavía..." }}</UserItemInfo>
-                    
-                    <UserItemTitle>Viajé a:</UserItemTitle>
-                    <UserItemInfo>{{ loggedUser.traveledTo ? loggedUser.traveledTo.join(', ') : "No definido todavía..." }}</UserItemInfo>
-                </ul>
-            </div>
-        </div>
+        <template v-else>
+            <UserProfileComponent :user-profile="loggedUser" />
+        </template>
     </section>
 </template>

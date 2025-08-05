@@ -1,52 +1,32 @@
 <script setup>
 import HeaderTitle from '../components/HeaderTitle.vue';
+import ReturnBtn from '../components/ReturnBtn.vue';
 import SubmitButton from '../components/SubmitButton.vue';
 import { onMounted, ref } from 'vue';
-import { editMyProfile, subscribeToAuthChanges } from '../services/auth';
 import { useRouter } from 'vue-router';
+import { editMyProfile, subscribeToAuthChanges } from '../services/auth';
 
 const router = useRouter();
-const argLocations = [
-    {province: "Buenos Aires", id: "buenos-aires"},
-    {province: "Buenos Aires Capital Federal", id: "capital-federal"},
-    {province: "Catamarca", id: "catamarca"},
-    {province: "Chaco", id: "chaco"},
-    {province: "Chubut", id: "chubut"},
-    {province: "Córdoba", id: "cordoba"},
-    {province: "Corrientes", id: "corrientes"},
-    {province: "Entre Ríos", id: "entre-rios"},
-    {province: "Formosa", id: "formosa"},
-    {province: "Jujuy", id: "jujuy"},
-    {province: "La Pampa", id: "la-pampa"},
-    {province: "La Rioja", id: "la-rioja"},
-    {province: "Mendoza", id: "mendoza"},
-    {province: "Misiones", id: "misiones"},
-    {province: "Neuquen", id: "neuquen"},
-    {province: "Río Negro", id: "rio-negro"},
-    {province: "Salta", id: "salta"},
-    {province: "San Juan", id: "san-juan"},
-    {province: "San Luís", id: "san-luis"},
-    {province: "Santa Cruz", id: "santa-cruz"},
-    {province: "Sante Fe", id: "santa-fe"},
-    {province: "Santiago del Estero", id: "santiago-del-estero"},
-    {province: "Tierra del Fuego", id: "tierra-del-fuego"},
-    {province: "Tucumán", id: "tucuman"}
-]
 const loading = ref(false);
+
 const editData = ref({
     displayName: '',
     bio: '',
     traveledTo: []
 });
 
-onMounted(() => {
-    subscribeToAuthChanges(
-        newUserData => editData.value = {
-            displayName: newUserData.displayName,
-            bio: newUserData.bio,
-            traveledTo: newUserData.traveledTo || []
-        }
-    );
+const argProvinces = ref(null);
+
+async function getProvinces() {
+    const data = await fetch('/provincias.json');
+
+    return argProvinces.value = await data.json();
+}
+
+onMounted(async () => {
+    subscribeToAuthChanges(async (newUserData) => editData.value = await newUserData);
+
+    await getProvinces();
 });
 
 const handleSubmit = async () => {
@@ -54,6 +34,7 @@ const handleSubmit = async () => {
 
     try {
         await editMyProfile({...editData.value});
+
         router.push('/profile');
     } catch (error) {
         console.error("[MyProfileEdit handleSubmit] Error al actualizar el perfil: ", error);
@@ -64,51 +45,64 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <section class="p-5 pb-48 md:pb-5">
-        <HeaderTitle>Editar Mi Perfil</HeaderTitle>
+    <HeaderTitle text="Editar Mi Perfil">
+        <template #content-before>
+            <ReturnBtn />
+        </template>
+    </HeaderTitle>
 
-        <form action="#" @submit.prevent="handleSubmit" class="mt-8 flex flex-col items-center">
-            <div class="flex flex-col justify-center gap-1 mb-5 w-2/3">
+    <section class="p-4 pb-48 md:pb-24">
+        <h2 class="sr-only">Información actual de la cuenta</h2>
+
+        <form action="#" @submit.prevent="handleSubmit" class="flex flex-col items-center gap-5">
+            <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <label for="displayName" class="w-max font-bold">Nombre</label>
                 <input
                     type="text" id="displayName"
                     v-model="editData.displayName"
-                    class="px-3 py-2 w-full border-2 rounded-lg border-slate-500 bg-slate-500 transition-colors outline-none focus:bg-slate-800 focus:text-white"
+                    autocomplete="off"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
                 >
             </div>
             
-            <div class="flex flex-col justify-center gap-1 mb-5 w-2/3">
+            <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <label for="bio" class="w-max font-bold">Biografía</label>
                 <textarea
-                    id="bio" rows="10"
+                    id="bio" rows="8"
                     v-model="editData.bio"
-                    class="px-3 py-2 w-full resize-none border-2 rounded-lg border-slate-500 bg-slate-500 transition-colors outline-none focus:bg-slate-800 focus:text-white"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
                 ></textarea>
             </div>
 
-            <div class="flex flex-col justify-center gap-1 mb-5 w-2/3">
+            <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <p class="font-bold">Viajé a...</p>
-                <div class="flex flex-row gap-2 my-1" v-for="location in argLocations">  
-                    <input  
-                        type="checkbox"  
-                        v-model="editData.traveledTo"  
-                        :value="location.province"  
-                        :id="location.id"  
-                    >  
-                    <label :for="location.id">{{ location.province }}</label>  
+                <div v-for="(location, index) in argProvinces" :key="index">  
+                    <label :for="location.province">
+                        <input  
+                            type="checkbox"  
+                            v-model="editData.traveledTo"  
+                            :value="location.province"  
+                            :name="location.province"
+                            :id="location.province"
+                        >  
+                        {{ location.province }}
+                    </label>  
                 </div>
             </div>
 
-            <div class="flex flex-col w-2/3 mt-8">
-                <SubmitButton color="red" @click="router.push('/profile')">
-                    Cancelar Cambios
+            <div class="flex flex-col w-2/3 gap-4 mt-4 max-sm:w-full">
+                <SubmitButton :disabled="loading || editData.displayName.trim() === ''">
+                    {{ loading ? 'Actualizando...' : 'Actualizar Perfil'}}
                 </SubmitButton>
-            </div>
 
-            <div class="flex flex-col w-2/3 mt-4">
-                <SubmitButton>
-                    Actualizar Perfil
-                </SubmitButton>
+                <button
+                    type="button"
+                    @click="router.push('/profile')"
+                    :disabled="loading"
+                    class="flex justify-center items-center px-6 py-2 w-full border-2 border-slate-200 text-white font-semibold rounded-lg transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Cancelar
+                </button>
             </div>
         </form>
     </section>

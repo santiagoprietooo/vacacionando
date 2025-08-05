@@ -1,54 +1,56 @@
 <script setup>  
+import HeaderTitle from '../components/HeaderTitle.vue';
+import ReturnBtn from '../components/ReturnBtn.vue';
+import UserProfileComponent from '../components/UserProfileComponent.vue';
+import { UserRound } from 'lucide-vue-next';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { subscribeToAuthChanges } from '../services/auth';
 import { getUserProfileById } from '../services/user-profile';
 
 const route = useRoute();
 const userId = route.params.id;
 const userProfile = ref(null);
-const notAnUser = ref(null);
 
-onMounted(async () => {
-    try {
-        userProfile.value = await getUserProfileById(userId);
-        notAnUser.value = false;
-    } catch (error) {
-        console.error("Error fetching user profile:", error);
-        notAnUser.value = true;
-        throw error;
-    }
+const loggedUser = ref({
+    id: null,
+    email: null
 });
 
+const loading = ref(false);
+const error = ref({ state: false, message: '' });
+
+onMounted(async () => {
+    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
+
+    userProfile.value = await getUserProfileById(userId, loading, error);
+});
 </script>  
 
 <template>
-    <section class="px-5 pt-5 pb-48 flex flex-col items-center">
-        <div v-if="notAnUser == null">
-            <p>Cargando perfil del usuario...</p>
+    <HeaderTitle v-if="!userProfile?.email" text="Cargando perfil...">
+        <template #content-before>
+            <ReturnBtn />
+        </template>
+    </HeaderTitle>
+
+    <HeaderTitle v-else text="Perfil de usuario">
+        <template #content-before>
+            <ReturnBtn />
+        </template>
+    </HeaderTitle>
+
+    <section class="pb-48 flex flex-col items-center">
+        <div v-if="loading" class="flex items-center justify-center h-96 w-full">
+            <span>Cargando...</span>
         </div>
 
-        <div v-else-if="notAnUser == false">
-            <h2>Perfil de usuario: {{ userId }}</h2>
-    
-            <p>Email: {{ userProfile.email || "No definido todavía..." }}</p>
-            <p>Nombre: {{ userProfile.displayName || "No definido todavía..." }}</p>
-            <p>Biografía: {{ userProfile.bio || "No definido todavía..." }}</p>
-            <p>Lugares visitados:</p>
-        
-            <ul v-if="userProfile.traveledTo">
-                <li
-                    v-for="place in userProfile.traveledTo"
-                    :key="place"
-                >
-                    {{ place }}
-                </li>
-            </ul>
+        <template v-else-if="!loading && userProfile?.id">
+            <UserProfileComponent :user-profile="userProfile" />
+        </template>
 
-            <p v-else>No definido.</p>
-        </div>
-
-        <div v-else>
-            <p>No existe el usuario</p>
+        <div v-else-if="!loading && error.state" class="flex items-center justify-center h-96 w-full">
+            <p>Este usuario no existe.</p>
         </div>
     </section>
 </template>

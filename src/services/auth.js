@@ -2,6 +2,7 @@ import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndP
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from './firebase';
 import { getUserProfileById, updateUserProfile } from "./user-profile";
+import { ref } from "vue";
 
 let loggedUser = {
     id: null,
@@ -22,7 +23,7 @@ onAuthStateChanged(auth, async user => {
             displayName: user.displayName
         }
         
-        getUserProfileById(user.uid)
+        getUserProfileById(user.uid, ref({ value: false }), ref({ value: false }))
         .then(userProfile => {
             loggedUser = {
                 ...loggedUser,

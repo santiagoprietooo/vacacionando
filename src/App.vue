@@ -1,4 +1,5 @@
 <script setup>
+import NavLink from './components/NavLink.vue';
 import FooterItem from './components/FooterItem.vue';
 import { House, User, LogIn, LogOut } from 'lucide-vue-next';
 import { logout, subscribeToAuthChanges } from './services/auth';
@@ -22,63 +23,21 @@ const handleLogout = () => {
 </script>
 
 <template>
-    <nav class="
-    py-2 px-6 flex flex-row items-center justify-between fixed bottom-0 z-20 bg-slate-900 border-t border-slate-500 w-screen
-
-    lg:p-0 lg:pr-6 lg:py-5 lg:h-screen lg:w-44 lg:flex-col lg:left-0 lg:border-r lg:border-t-0
-    ">
+    <nav class="fixed bottom-0 z-20 flex flex-row items-center justify-between w-screen bg-slate-800 border-t border-slate-500 lg:left-0 lg:flex-col lg:h-screen lg:w-44 lg:p-0 lg:py-5 lg:pr-6 lg:bg-slate-950/25 lg:border-t-0 lg:border-r">
         <RouterLink to="/" class="hidden lg:block">
-            <img src="/icon/vacacionando-icon.png" alt='ícono de "Vacacionando".' width="80rem">
+            <img src="/icon/vacacionando-icon.png" alt='ícono de "Vacacionando".' class="w-20">
         </RouterLink>
 
-        <ul class="flex flex-row items-center gap-8 lg:flex-col lg:gap-0">
-            <li class="my-2">
-                <RouterLink
-                    to="/"
-                    class="
-                    p-4 bg-slate-800 flex justify-center items-center hover:bg-slate-700 focus:bg-slate-900 rounded-full transition-colors
-
-                    lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
-                >
-                    <House class="size-7"/> <span class="hidden lg:block">Home</span>
-                </RouterLink>
-            </li>
+        <ul class="flex flex-row items-center lg:flex-col lg:gap-2">
+            <NavLink nav-to="Inicio" path="/" />
 
             <template v-if="loggedUser.id !== null">
-                <RouterLink
-                    to="/profile"
-                    class="
-                    p-4 bg-slate-800 flex justify-center items-center hover:bg-slate-700 focus:bg-slate-900 rounded-full transition-colors
-
-                    lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
-                >
-                    <User class="size-7"/> <span class="hidden lg:block">Perfil</span>
-                </RouterLink>
+                <NavLink nav-to="Perfil" path="/profile" />
             </template>
+
             <template v-else>
-                <li class="my-2">
-                    <RouterLink
-                        to="/sign-in"
-                        class="
-                        p-4 bg-slate-800 flex justify-center items-center hover:bg-slate-700 focus:bg-slate-900 rounded-full transition-colors
-
-                        lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
-                        >
-                            <User class="size-7"/> <span class="hidden lg:block">Iniciar Sesión</span>
-                    </RouterLink>
-                </li>
-
-                <li class="my-2">
-                    <RouterLink
-                        to="/log-in"
-                        class="
-                        p-4 bg-slate-800 flex justify-center items-center hover:bg-slate-700 focus:bg-slate-900 rounded-full transition-colors
-
-                        lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
-                        >
-                            <LogIn class="size-7"/> <span class="hidden lg:block">Crear Cuenta</span>
-                    </RouterLink>
-                </li>
+                <NavLink nav-to="Iniciar Sesión" path="/sign-in" />
+                <NavLink nav-to="Crear Cuenta" path="/log-in" />
             </template>
         </ul>
 
@@ -87,7 +46,7 @@ const handleLogout = () => {
                 <button 
                     type="submit" 
                         class="
-                        p-4 bg-red-800 flex justify-center items-center hover:bg-red-700 focus:bg-red-900 rounded-full transition-colors
+                        p-4 bg-red-800/60 flex justify-center items-center hover:bg-red-700/60 focus:bg-red-900/60 transition-colors
 
                         lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
                     >
@@ -101,15 +60,13 @@ const handleLogout = () => {
         <RouterView></RouterView>
     </main>
 
-    <footer class="hidden lg:px-3 lg:py-5 lg:h-screen lg:flex lg:flex-col lg:items-center lg:justify-end lg:min-w-44 lg:fixed lg:right-0 lg:border-l lg:border-slate-500">
+    <footer class="hidden bg-slate-950/25 lg:px-3 lg:py-5 lg:h-screen lg:flex lg:flex-col lg:items-center lg:justify-end lg:min-w-44 lg:fixed lg:right-0 lg:border-l lg:border-slate-500">
         <div>
             <ul class="text-xs text-center">
-                <FooterItem>Condiciones de Servicio</FooterItem>
-                <FooterItem>Política de Privacidad</FooterItem>
-                <FooterItem>Política de Cookies</FooterItem>
-                <li>
-                    <span> <p class="mt-3">&copy; 2024 - Vacacionando</p> </span>
-                </li>
+                <FooterItem text="Condiciones de Servicio" />
+                <FooterItem text="Política de Privacidad" />
+                <FooterItem text="Política de Cookies" />
+                <FooterItem text="&copy; 2024 - Vacacionando" />
             </ul>
         </div>
     </footer>

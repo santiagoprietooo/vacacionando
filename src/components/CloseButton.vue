@@ -1,11 +1,18 @@
 <script setup>
 import { X } from 'lucide-vue-next';
+
+const val = defineModel({
+    type: Boolean,
+    default: false
+});
 </script>
 
 <template>
     <button
         type="button"
-        class="size-12 flex justify-center items-center rounded-full hover:bg-slate-50 hover:bg-opacity-15"
+        class="flex items-center justify-center p-2 rounded-full transition-colors hover:bg-slate-50/15"
+        @click="val = !val"
+        aria-label="Cerrar"
     >
         <X class="text-white"/>
     </button>

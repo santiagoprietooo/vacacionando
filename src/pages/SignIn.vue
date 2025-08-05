@@ -3,8 +3,8 @@ import HeaderTitle from '../components/HeaderTitle.vue';
 import InputWarning from '../components/InputWarning.vue';
 import SubmitButton from '../components/SubmitButton.vue';
 import { ref } from 'vue';
-import { login } from '../services/auth';
 import { useRouter } from 'vue-router';
+import { login } from '../services/auth';
 
 const router = useRouter();
 const user = ref({
@@ -41,16 +41,18 @@ async function handleSubmit() {
 </script>
 
 <template>
+    <HeaderTitle text="Iniciar sesión" />
+
     <section class="p-5">
-        <HeaderTitle>Iniciar Sesión</HeaderTitle>
+        <h2 class="sr-only">Datos a completar</h2>
 
         <form action="#" @submit.prevent="handleSubmit" class="mt-8 flex flex-col items-center">
             <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="email" class="w-max">Email</label>
+                <label for="email" class="w-max font-semibold">Email</label>
                 <input
                     type="email" id="email"
                     v-model="user.email"
-                    class="px-3 py-2 w-full border-2 rounded-lg border-slate-500 bg-slate-500 transition-colors outline-none focus:bg-slate-800 focus:text-white"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
                 >
                 <InputWarning v-if="!isValidEmail(user.email)">
                     Esta no es una dirección de correo valida.
@@ -58,18 +60,18 @@ async function handleSubmit() {
             </div>
 
             <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="password" class="w-max">Contraseña</label>
+                <label for="password" class="w-max font-semibold">Contraseña</label>
                 <div class="flex flex-row gap-1">
                     <input
                     :type="showPassword ? 'text' : 'password'"
                     id="password"
                     v-model="user.password"
-                    class="px-3 py-2 w-full border-2 rounded-lg border-slate-500 bg-slate-500 transition-colors outline-none focus:bg-slate-800 focus:text-white"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
                     >
                     <button
                         type="button"
                         @click="handlePassword"
-                        class="w-24 bg-slate-800 font-semibold border-2 border-slate-600 rounded-lg transition-colors hover:bg-slate-600"
+                        class="w-24 bg-slate-600 font-semibold border-2 border-slate-600 rounded-lg transition-colors hover:bg-slate-700"
                     >
                         {{ showPassword ? 'Ocultar' : 'Mostrar' }}
                     </button>
