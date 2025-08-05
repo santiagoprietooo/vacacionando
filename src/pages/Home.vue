@@ -9,6 +9,7 @@ import { onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { savePublicPost, readPublicPosts } from '../services/users-posts';
 import { subscribeToAuthChanges } from '../services/auth';
+import AlertMessage from '../components/AlertMessage.vue';
 
 const loggedUser = ref({
     id: null,
@@ -21,6 +22,18 @@ const newPosts = ref({
     description : '',
     location : ''
 });
+
+const loadinStates = ref({
+    loading: false,
+    state: ''
+});
+
+function cleanLoadingState() {
+    loadinStates.value = {
+        loading: false,
+        state: ''
+    }
+}
 
 const loading = ref(false);
 const loading2 = ref(false);
@@ -49,6 +62,15 @@ async function handleSubmit() {
             ...newPosts.value
         });
 
+        loadinStates.value = {
+            loading: true,
+            state: 'saving_post'
+        }
+
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 3000);
+
         newPosts.value = {
             title: '',
             description: '',
@@ -62,11 +84,17 @@ async function handleSubmit() {
     }
 
     loading.value = false;
+
     isActive.value = false;
 }
 </script>
 
 <template>
+    <AlertMessage
+        v-if="loadinStates.loading && loadinStates.state === 'saving_post'"
+        v-model="loadinStates.loading"
+    />
+
     <dialog v-if="isActive" class="relative z-30 flex min-h-screen w-full">
         <h1 class="sr-only">Crear una publicación</h1>
 

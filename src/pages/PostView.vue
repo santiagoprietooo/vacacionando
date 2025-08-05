@@ -6,6 +6,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { subscribeToAuthChanges } from '../services/auth';
 import { getPostById } from '../services/users-posts';
+import { getUserEmail } from '../services/user-profile';
 
 onMounted(() => {
     subscribeToAuthChanges((newUserData) => loggedUser.value = newUserData);
@@ -23,8 +24,14 @@ const postExists = ref(null);
 
 onMounted(async () => {
     try {
-        postDetails.value = await getPostById(postId);
-        postExists.value = true;
+        await getPostById(postId, async (post) => {
+            postDetails.value = await post;
+            postExists.value = true;
+
+            for (const usersComments of postDetails.value?.comments || []) {
+                await getUserEmail(usersComments?.user_id)
+            }
+        });
     } catch (error) {
         console.error("Error fetching post:", error);
     }

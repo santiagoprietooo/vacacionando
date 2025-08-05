@@ -60,7 +60,7 @@ export function readPublicPosts(callback){
  * @param {String} id ID del post a obtener.
  * @returns {Promise<Object>} Objeto con los datos del post. 
  */
-export async function getPostById(id){
+export async function getPostById(id, callback){
   try {
     const profileRef = doc(db, `/posted-by-users/${id}`);
     const profileDocument = await getDoc(profileRef);
@@ -69,16 +69,20 @@ export async function getPostById(id){
       throw new Error(`No se encontró el perfil de usuario con ID: ${id}`);
     }
 
-    return {
-      id: profileDocument.id,
-      title: profileDocument.data().title,
-      description: profileDocument.data().description,
-      location: profileDocument.data().location,
-      comments: profileDocument.data().comments,
-      user_id: profileDocument.data().user_id,
-      user_email: profileDocument.data().user_email,
-      created_at: profileDocument.data().created_at
-    };
+    onSnapshot(profileRef, (snapshot) => {
+      const post = {
+        id: snapshot.id,
+        title: snapshot.data().title,
+        description: snapshot.data().description,
+        location: snapshot.data().location,
+        comments: snapshot.data().comments,
+        user_id: snapshot.data().user_id,
+        user_email: snapshot.data().user_email,
+        created_at: snapshot.data().created_at
+      }
+
+      callback(post);
+    });
   } catch (error) {
     console.error("Error al obtener el posteo:", error);
     throw error;

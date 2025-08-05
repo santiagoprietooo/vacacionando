@@ -1,5 +1,6 @@
 <script setup>
 import SubmitButton from './SubmitButton.vue';
+import AlertMessage from './AlertMessage.vue';
 import { MapPin, SendHorizontal, UserRound } from 'lucide-vue-next';
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -25,21 +26,44 @@ const isOnThatProfile = computed(() => {
 });
 
 const comment = ref('');
-const loading = ref(false);
+
+const loadinStates = ref({
+    loading: false,
+    state: ''
+});
+
+function cleanLoadingState() {
+    loadinStates.value = {
+        loading: false,
+        state: ''
+    }
+}
 
 async function handleSubmitComment() {
-    loading.value = true;
+    loadinStates.value = {
+        loading: true,
+        state: 'sending_comment'
+    };
 
     try {
         await saveComment(postID, comment.value, props.loggedUser.id);
 
+        loadinStates.value = {
+            loading: true,
+            state: 'comment_sent'
+        };
+
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 3000);
+
         comment.value = '';
     } catch (error) {
+        cleanLoadingState();
+
         console.error("Error al enviar el comentario:", error);
         throw error;
     }
-
-    loading.value = false;
 }
 
 const userNames = ref([]);
@@ -156,13 +180,18 @@ onMounted(async () => {
                     :name="`comment-${post?.id}`"
                     :id="`comment-${post?.id}`"
                     v-model="comment"
-                    :disabled="!loggedUser?.id || loading"
+                    :disabled="!loggedUser?.id || loadinStates.loading && loadinStates.state === 'sending_comment'"
                     rows="1"
                     placeholder="Comentar..."
                     class="px-4 py-2 w-full min-h-[43.2px] transition-colors bg-transparent border-2 border-slate-300 rounded-s-full border-opacity-35 outline-none resize-none text-slate-400 placeholder:text-slate-400 focus:border-opacity-100 focus:text-white focus:placeholder:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 />
 
-                <SubmitButton rounded="comment" width="max" v-if="loggedUser.id !== null" :disabled="comment.trim() === '' || loading">
+                <SubmitButton
+                    v-if="loggedUser.id !== null"
+                    rounded="comment"
+                    width="max"
+                    :disabled="comment.trim() === '' || loadinStates.loading && loadinStates.state === 'sending_comment'"
+                >
                     <SendHorizontal class="block md:hidden" />
                     <span class="max-md:sr-only">Enviar</span>
                 </SubmitButton>
@@ -233,4 +262,10 @@ onMounted(async () => {
             </ul>
         </template>
     </section>
+
+    <AlertMessage
+        v-if="loadinStates.loading && loadinStates.state === 'comment_sent'"
+        message="Se envió el comentario"
+        v-model="loadinStates.loading"
+    />
 </template>

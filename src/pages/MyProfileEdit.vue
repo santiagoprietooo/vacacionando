@@ -15,16 +15,30 @@ const editData = ref({
     traveledTo: []
 });
 
-const argProvinces = ref(null);
+const argProvinces = ref([]);
 
 async function getProvinces() {
-    const data = await fetch('/provincias.json');
+    try {
+        const res = await fetch('/provincias.json');
 
-    return argProvinces.value = await data.json();
+        if (!res.ok) throw new Error('Error al cargar provincias');
+
+        argProvinces.value = await res.json();
+    } catch (err) {
+        argProvinces.value = [];
+        console.error('[getProvinces]', err);
+    }
 }
-
 onMounted(async () => {
-    subscribeToAuthChanges(async (newUserData) => editData.value = await newUserData);
+    subscribeToAuthChanges(async (newUserData) => {
+    editData.value = {
+        ...editData.value,
+        ...newUserData,
+        traveledTo: Array.isArray(newUserData.traveledTo)
+            ? newUserData.traveledTo
+            : []
+    };
+});
 
     await getProvinces();
 });
@@ -33,7 +47,7 @@ const handleSubmit = async () => {
     loading.value = true;
 
     try {
-        await editMyProfile({...editData.value});
+        await editMyProfile({ ...editData.value });
 
         router.push('/profile');
     } catch (error) {
@@ -57,50 +71,35 @@ const handleSubmit = async () => {
         <form action="#" @submit.prevent="handleSubmit" class="flex flex-col items-center gap-5">
             <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <label for="displayName" class="w-max font-bold">Nombre</label>
-                <input
-                    type="text" id="displayName"
-                    v-model="editData.displayName"
-                    autocomplete="off"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                >
+                <input type="text" id="displayName" v-model="editData.displayName" autocomplete="off"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white">
             </div>
-            
+
             <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <label for="bio" class="w-max font-bold">Biografía</label>
-                <textarea
-                    id="bio" rows="8"
-                    v-model="editData.bio"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                ></textarea>
+                <textarea id="bio" rows="8" v-model="editData.bio"
+                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"></textarea>
             </div>
 
             <div class="flex flex-col gap-1 w-2/3 max-sm:w-full">
                 <p class="font-bold">Viajé a...</p>
-                <div v-for="(location, index) in argProvinces" :key="index">  
-                    <label :for="location.province">
-                        <input  
-                            type="checkbox"  
-                            v-model="editData.traveledTo"  
-                            :value="location.province"  
-                            :name="location.province"
-                            :id="location.province"
-                        >  
+                <div v-for="(location, index) in argProvinces" :key="index">
+                    <label :for="'province-' + index">
+                        <input type="checkbox" v-model="editData.traveledTo" :value="location.province"
+                            :id="'province-' + index" />
+
                         {{ location.province }}
-                    </label>  
+                    </label>
                 </div>
             </div>
 
             <div class="flex flex-col w-2/3 gap-4 mt-4 max-sm:w-full">
-                <SubmitButton :disabled="loading || editData?.displayName?.trim() === ''">
-                    {{ loading ? 'Actualizando...' : 'Actualizar Perfil'}}
+                <SubmitButton :disabled="loading || !editData.displayName || editData.displayName.trim() === ''">
+                    {{ loading ? 'Actualizando...' : 'Actualizar Perfil' }}
                 </SubmitButton>
 
-                <button
-                    type="button"
-                    @click="router.push('/profile')"
-                    :disabled="loading"
-                    class="flex justify-center items-center px-6 py-2 w-full border-2 border-slate-200 text-white font-semibold rounded-lg transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button type="button" @click="router.push('/profile')" :disabled="loading"
+                    class="flex justify-center items-center px-6 py-2 w-full border-2 border-slate-200 text-white font-semibold rounded-lg transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:opacity-50 disabled:cursor-not-allowed">
                     Cancelar
                 </button>
             </div>

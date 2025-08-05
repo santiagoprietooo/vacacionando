@@ -91,6 +91,10 @@ export async function editMyProfile({displayName, bio, traveledTo}) {
     try {
         await updateProfile(auth.currentUser, {displayName});
 
+        if (!bio || bio.trim() === '') {
+            bio = null;
+        }
+
         await updateUserProfile(loggedUser.id, {displayName, bio, traveledTo});
 
         loggedUser = {

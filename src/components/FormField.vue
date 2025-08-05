@@ -69,16 +69,22 @@ const val = defineModel();
             </option>
         </select>
 
-        <InputWarning v-if="useFor === 'titulo' && val.length < 5 || val.length > 50">
-            El campo debe tener entre 5 y 50 carácteres.
-        </InputWarning>
+        <template v-if="useFor === 'titulo'">
+            <InputWarning v-if="val.length < 5 || val.length > 50">
+                El campo debe tener entre 5 y 50 carácteres.
+            </InputWarning>
+        </template>
 
-        <InputWarning v-if="useFor === 'descripcion' && val.length < 10 || val.length > 550">
-            El campo debe tener entre 10 y 550 carácteres.
-        </InputWarning>
+        <template v-if="useFor === 'descripcion'">
+            <InputWarning v-if="val.length < 10 || val.length > 550">
+                El campo debe tener entre 10 y 550 carácteres.
+            </InputWarning>
+        </template>
 
-        <InputWarning v-if="useFor === 'provincia' && !val">
-            Debe seleccionar una provincia.
-        </InputWarning>
+        <template v-if="useFor === 'provincia'">
+            <InputWarning v-if="!val">
+                Debe seleccionar una provincia.
+            </InputWarning>
+        </template>
     </div>
 </template>
