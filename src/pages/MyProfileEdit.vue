@@ -91,7 +91,7 @@ const handleSubmit = async () => {
             </div>
 
             <div class="flex flex-col w-2/3 gap-4 mt-4 max-sm:w-full">
-                <SubmitButton :disabled="loading || editData.displayName.trim() === ''">
+                <SubmitButton :disabled="loading || editData?.displayName?.trim() === ''">
                     {{ loading ? 'Actualizando...' : 'Actualizar Perfil'}}
                 </SubmitButton>
 
