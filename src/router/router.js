@@ -4,6 +4,7 @@ import Home from '../pages/Home.vue';
 import SignIn from '../pages/SignIn.vue';
 import LogIn from '../pages/LogIn.vue';
 import MyProfile from '../pages/MyProfile.vue';
+import Settings from '../pages/Settings.vue';
 import MyProfileEdit from '../pages/MyProfileEdit.vue';
 import UserProfile from '../pages/UserProfile.vue';
 import PostView from '../pages/PostView.vue';
@@ -11,13 +12,14 @@ import PostView from '../pages/PostView.vue';
 import { subscribeToAuthChanges } from '../services/auth';
 
 const routes = [
-    { path: '/',                 component: Home },
-    { path: '/log-in',           component: LogIn },
-    { path: '/sign-in',          component: SignIn },
+    { path: '/',                 component: Home                                        },
+    { path: '/log-in',           component: LogIn                                       },
+    { path: '/sign-in',          component: SignIn                                      },
     { path: '/profile',          component: MyProfile,     meta: { requiresAuth: true } },
+    { path: '/settings',         component: Settings,      meta: { requiresAuth: true } },
     { path: '/profile/edit',     component: MyProfileEdit, meta: { requiresAuth: true } },
-    { path: '/profile/:id',      component: UserProfile, name: 'profile' },
-    { path: '/public_post/:id',  component: PostView, name: 'public_post' }
+    { path: '/profile/:id',      component: UserProfile,   name: 'profile'              },
+    { path: '/public_post/:id',  component: PostView,      name: 'public_post'          }
 ];
 
 const router = createRouter({

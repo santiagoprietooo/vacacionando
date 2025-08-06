@@ -21,7 +21,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <HeaderTitle text="Mi Perfil" >
+    <HeaderTitle text="Mi Perfil">
         <template #content-before>
             <ReturnBtn />
         </template>

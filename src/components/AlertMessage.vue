@@ -2,7 +2,7 @@
 defineProps({
     message: {
         type: String,
-        default: 'Publicación guardada exitosamente'
+        default: 'Publicación creada exitosamente'
     }
 });
 

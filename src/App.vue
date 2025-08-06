@@ -1,12 +1,10 @@
 <script setup>
 import NavLink from './components/NavLink.vue';
 import FooterItem from './components/FooterItem.vue';
-import { House, User, LogIn, LogOut } from 'lucide-vue-next';
-import { logout, subscribeToAuthChanges } from './services/auth';
+import { subscribeToAuthChanges } from './services/auth';
 import { ref, onMounted } from 'vue';
 import { RouterLink, useRouter } from 'vue-router';
 
-const router = useRouter();
 const loggedUser = ref({
     id: null,
     email: null
@@ -15,11 +13,6 @@ const loggedUser = ref({
 onMounted(() => {
     subscribeToAuthChanges(newUserData => loggedUser.value = newUserData);
 });
-
-const handleLogout = () => {
-    logout();
-    router.push('/sign-in');
-}
 </script>
 
 <template>
@@ -31,29 +24,16 @@ const handleLogout = () => {
         <ul class="flex flex-row items-center lg:flex-col lg:gap-2">
             <NavLink nav-to="Inicio" path="/" />
 
-            <template v-if="loggedUser.id !== null">
-                <NavLink nav-to="Perfil" path="/profile" />
+            <template v-if="!loggedUser.id">
+                <NavLink nav-to="Iniciar Sesión" path="/sign-in" />
+                <NavLink nav-to="Crear Cuenta"   path="/log-in" />
             </template>
 
             <template v-else>
-                <NavLink nav-to="Iniciar Sesión" path="/sign-in" />
-                <NavLink nav-to="Crear Cuenta" path="/log-in" />
+                <NavLink nav-to="Perfil"  path="/profile" />
+                <NavLink nav-to="Ajustes" path="/settings" />
             </template>
         </ul>
-
-        <template v-if="loggedUser.id !== null">
-            <form action="#" @submit.prevent="handleLogout">
-                <button 
-                    type="submit" 
-                        class="
-                        p-4 bg-red-800/60 flex justify-center items-center hover:bg-red-700/60 focus:bg-red-900/60 transition-colors
-
-                        lg:px-2 lg:justify-start lg:h-14 lg:w-40 lg:gap-2 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
-                    >
-                        <LogOut class="size-7"/> <span class="hidden lg:block">Cerrar Sesión</span>
-                </button>
-            </form>
-        </template>
     </nav>
 
     <main class="lg:absolute lg:left-44 lg:right-44 lg:z-20">
