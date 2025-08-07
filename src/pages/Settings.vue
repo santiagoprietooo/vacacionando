@@ -4,6 +4,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout, subscribeToAuthChanges } from '../services/auth';
 import AlertMessage from '../components/AlertMessage.vue';
+import ReturnBtn from '../components/ReturnBtn.vue';
 
 const router = useRouter();
 
@@ -16,20 +17,20 @@ onMounted(() => {
     subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
 });
 
-const loadinStates = ref({
+const loadingStates = ref({
     loading: false,
     state: ''
 });
 
 function cleanLoadingState() {
-    loadinStates.value = {
+    loadingStates.value = {
         loading: false,
         state: ''
     }
 }
 
 const handleLogout = async () => {
-    loadinStates.value = {
+    loadingStates.value = {
         loading: true,
         state: 'logging_out'
     }
@@ -37,7 +38,7 @@ const handleLogout = async () => {
     try {
         await logout();
 
-        loadinStates.value = {
+        loadingStates.value = {
             loading: true,
             state: 'logged_out'
         }
@@ -47,20 +48,24 @@ const handleLogout = async () => {
             router.push('/');
         }, 2000);
     } catch (error) {
-        loadinStates.value = {
-            loading: true,
+        loadingStates.value = {
+            loading: false,
             state: 'error_logging_out'
-        }
+        };
 
-        cleanLoadingState();
-
-        console.error(error);
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 2000);
     }
 }
 </script>
 
 <template>
-    <HeaderTitle text="Ajustes"/>
+    <HeaderTitle text="Ajustes">
+        <template #content-before>
+            <ReturnBtn />
+        </template>
+    </HeaderTitle>
 
     <section class="pb-48">
         <h2 class="p-4 w-full bg-slate-500/15">Cerrar sesión</h2>
@@ -69,13 +74,23 @@ const handleLogout = async () => {
         <form @submit.prevent="handleLogout" class="p-4">
             <button 
                 type="submit"
-                :disabled="!loggedUser.id || loadinStates.loading && loadinStates.state === 'logging_out'" 
+                :disabled="!loggedUser.id || loadingStates.loading && loadingStates.state === 'logging_out'" 
                 class="flex place-self-end p-2 bg-red-800/70 font-semibold border-2 border-red-400 rounded-lg transition-colors hover:bg-red-700/70 focus:bg-red-900/70 :disabled:bg-red-600/70 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {{ loadinStates.loading ? "Cerrando sesión" : "Cerrar Sesión" }}
+                {{ loadingStates.loading ? "Cerrando sesión" : "Cerrar Sesión" }}
             </button>
         </form>
     </section>
 
-    <AlertMessage message="Se cerró la sesión. Redirigiendo al inicio..." v-model="loadinStates.loading" />
+    <AlertMessage
+        v-if="loadingStates.loading && loadingStates.state === 'logged_out'"
+        message="Se cerró la sesión. Redirigiendo..."
+        v-model="loadingStates.loading"
+    />
+
+    <AlertMessage
+        v-else-if="loadingStates.loading && loadingStates.state === 'error_logging_out'"
+        message="Error al cerrar sesión."
+        v-model="loadingStates.loading"
+    />
 </template>

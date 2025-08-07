@@ -18,22 +18,47 @@ const loggedUser = ref({
 });
 
 const route = useRoute();
-const postId = route.params.id;
-const postDetails = ref(null);
-const postExists = ref(null);
+const postID = route.params.id;
+
+const post = ref({
+    id: postID,
+    title: '',
+    description: '',
+    location: '',
+    user_email: '',
+    user_id: '',
+    created_at: ''
+});
+
+const loadingStates = ref({
+    loading: false,
+    state: ''
+});
 
 onMounted(async () => {
-    try {
-        await getPostById(postId, async (post) => {
-            postDetails.value = await post;
-            postExists.value = true;
+    loadingStates.value = {
+        loading: true,
+        state: 'loading_post'
+    };
 
-            for (const usersComments of postDetails.value?.comments || []) {
+    try {
+        await getPostById(postID, async (p) => {
+            post.value = await p;
+
+            loadingStates.value = {
+                loading: false,
+                state: 'post_loaded'
+            };
+
+            for (const usersComments of post.value?.comments || []) {
                 await getUserEmail(usersComments?.user_id)
             }
         });
     } catch (error) {
-        console.error("Error fetching post:", error);
+        loadingStates.value = {
+            loading: false,
+            state: 'error_finding_post'
+        };
     }
 });
 </script>
@@ -46,10 +71,22 @@ onMounted(async () => {
             </template>
         </HeaderTitle>
 
-        <PostComponent v-if="postExists == true" :post="postDetails" :logged-user="loggedUser" />
+        <PostComponent
+            v-if="!loadingStates.loading && loadingStates.state === 'post_loaded' && post"
+            :post="post"
+            :logged-user="loggedUser"
+        />
 
-        <p v-else-if="postExists == null" class="p-2">Cargando...</p>
+        <div v-else-if="loadingStates.loading && loadingStates.state === 'loading_post'" class="flex items-center justify-center p-4">
+            <p class="text-xl text-center font-semibold">
+                Cargando...
+            </p>
+        </div>
 
-        <p v-else>Este post no existe.</p>
+        <div v-else-if="!loadingStates.loading && loadingStates.state === 'error_finding_post'" class="flex items-center justify-center p-4">
+            <p class="text-xl text-center font-semibold">
+                Esta publicación no existe.
+            </p>
+        </div>
     </section>
 </template>

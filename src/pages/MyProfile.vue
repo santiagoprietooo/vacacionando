@@ -38,7 +38,11 @@ onMounted(() => {
 
     <section class="pb-48">
         <template v-if="!loggedUser">
-            <p>Cargando...</p>
+            <div class="flex items-center justify-center p-4">
+                <p class="text-xl text-center font-semibold">
+                    Cargando...
+                </p>
+            </div>
         </template>
 
         <template v-else>

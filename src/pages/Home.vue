@@ -4,12 +4,14 @@ import SubmitButton from '../components/SubmitButton.vue';
 import PostComponent from '../components/PostComponent.vue';
 import PostingButton from '../components/PostingButton.vue';
 import CloseButton from '../components/CloseButton.vue';
-import FormField from '../components/FormField.vue';
+import FormField from '../components/SelectInput.vue';
 import { onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { savePublicPost, readPublicPosts } from '../services/users-posts';
 import { subscribeToAuthChanges } from '../services/auth';
 import AlertMessage from '../components/AlertMessage.vue';
+import TextInput from '../components/TextInput.vue';
+import TextareaInput from '../components/TextareaInput.vue';
 
 const loggedUser = ref({
     id: null,
@@ -23,23 +25,23 @@ const newPosts = ref({
     location : ''
 });
 
-const loadinStates = ref({
+const loadingStates = ref({
     loading: false,
     state: ''
 });
 
 function cleanLoadingState() {
-    loadinStates.value = {
+    loadingStates.value = {
         loading: false,
         state: ''
     }
 }
 
-const loading = ref(false);
-const loading2 = ref(false);
-
 onMounted(() => {
-    loading2.value = true;
+    loadingStates.value = {
+        loading: true,
+        state: 'loading_posts'
+    };
 
     readPublicPosts(async (newPosts) => posts.value = await newPosts);
     subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
@@ -47,27 +49,42 @@ onMounted(() => {
 
 watch(posts, (newPosts) => {
     if (newPosts.length > 0) {
-        loading2.value = false;
+        cleanLoadingState();
     }
 }, { immediate: true });
 
 let isActive = ref(false);
+
+watch(isActive, (activeModal) => {
+    if (activeModal === false) {
+        newPosts.value = {
+            title: '',
+            description: '',
+            location: ''
+        }
+    }
+}, { immediate: true });
+
 let isActive2 = ref(false);
 
 async function handleSubmit() {
-    loading.value = true;
+    loadingStates.value = {
+        loading: true,
+        state: 'saving_post'
+    }
 
     try {
         await savePublicPost({
             ...newPosts.value
         });
 
-        loadinStates.value = {
+        loadingStates.value = {
             loading: true,
-            state: 'saving_post'
+            state: 'post_saved'
         }
 
         setTimeout(() => {
+            isActive.value = false;
             cleanLoadingState();
         }, 3000);
 
@@ -77,58 +94,49 @@ async function handleSubmit() {
             location: ''
         };
     } catch (error) {
-        loading.value = false;
+        loadingStates.value = {
+            loading: false,
+            state: 'error_saving_post'
+        };
 
-        console.error('Error al guardar el post:', error);
-        throw error;
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 3000);
     }
-
-    loading.value = false;
-
-    isActive.value = false;
 }
 </script>
 
 <template>
-    <AlertMessage
-        v-if="loadinStates.loading && loadinStates.state === 'saving_post'"
-        v-model="loadinStates.loading"
-    />
-
     <dialog v-if="isActive" class="relative z-30 flex min-h-screen w-full">
         <h1 class="sr-only">Crear una publicación</h1>
 
-        <form @submit.prevent="handleSubmit" class="flex flex-col items-center gap-2 p-4 w-full bg-slate-700 text-white">
+        <form @submit.prevent="handleSubmit" class="flex flex-col items-center gap-4 p-4 w-full bg-slate-700 text-white">
             <div class="place-items-end w-full">
                 <CloseButton v-model="isActive"/>
             </div>
 
-            <FormField
-                use-for="titulo"
-                text="Título"
+            <TextInput
+                use-for="título"
+                text="Título de la publicación"
+                placeholder="Mi viaje a..."
                 v-model="newPosts.title"
             />
 
-            <FormField
-                use-for="descripcion"
+            <TextareaInput
+                use-for="descripción"
                 text="Descripción"
+                placeholder="¡La pasé increíble!"
                 v-model="newPosts.description"
             />
 
-            <FormField
-                use-for="provincia"
-                text="Provincia"
-                v-model="newPosts.location"
-            />
+            <FormField v-model="newPosts.location"/>
 
-            <div class="flex flex-col mt-8 w-3/4 max-sm:w-full">
+            <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
                 <SubmitButton
-                    :disabled="loading || newPosts.title.length < 5 || newPosts.title.length > 50 ||
-                    newPosts.description.length < 10 || newPosts.description.length > 550 ||
-                    !newPosts.location"
-                    color="slate"
+                    width="max"
+                    :disabled="loadingStates.loading && loadingStates.state === 'saving_post' || newPosts.title.trim() === '' || newPosts.description.trim() === '' || !newPosts.location"
                 >
-                    {{ loading ? "Publicando..." : "Realizar posteo"}}
+                    {{ loadingStates.loading && loadingStates.state === 'saving_post' ? "Publicando..." : "Realizar publicación"}}
                 </SubmitButton>
             </div>
         </form>
@@ -175,17 +183,28 @@ async function handleSubmit() {
                 <PostComponent :post="post" :logged-user="loggedUser" />
             </template>
 
-            <template v-if="loading2">
-                <div class="flex items-center justify-center h-96">
-                    <p class="text-center text-xl font-semibold">
+            <template v-if="loadingStates.loading && loadingStates.state === 'loading_posts'">
+                <div class="flex items-center justify-center p-4">
+                    <p class="text-xl text-center font-semibold">
                         Cargando...
                     </p>
                 </div>
             </template>
 
-            <PostingButton v-if="loggedUser.id !== null" @click="isActive = !isActive" />
+            <PostingButton v-if="loggedUser.id !== null" v-model="isActive" />
 
-            <PostingButton v-else @click="isActive2 = !isActive2" />
+            <PostingButton v-else v-model="isActive2" />
         </section>
     </section>
+
+    <AlertMessage
+        v-if="loadingStates.loading && loadingStates.state === 'post_saved'"
+        v-model="loadingStates.loading"
+    />
+
+    <AlertMessage
+        v-else-if="loadingStates.loading && loadingStates.state === 'error_saving_post'"
+        message="Error al crear la publicación."
+        v-model="loadingStates.loading"
+    />
 </template>

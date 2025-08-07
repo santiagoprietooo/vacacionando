@@ -1,16 +1,12 @@
 <script setup>
 defineProps({
-    color : {
+    width : {
         type : String,
-        default : 'slate'
+        default : 'full'
     },
     rounded : {
         type : String,
         default : 'normal'
-    },
-    width : {
-        type : String,
-        default : 'full'
     }
 });
 </script>
@@ -18,17 +14,12 @@ defineProps({
 <template>
     <button
         type="submit"
-        class="transition-all text-black font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        class="bg-slate-300 text-black font-semibold transition-all hover:bg-slate-200 focus:bg-slate-400 disabled:hover:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
         :class="{
-            'bg-slate-300'                : color == 'slate',
-            'hover:bg-slate-200'          : color == 'slate',
-            'focus:bg-slate-400'          : color == 'slate',
-
-            'w-full px-6 py-2'              : width == 'full',
-            'w-max px-3 p-2 md:px-6 py-2'   : width == 'max',
-
-            'rounded-lg'                    : rounded == 'normal',
-            'rounded-e-full rounded-s-none' : rounded == 'comment'
+            'py-2 px-6 w-full'              : width === 'full',
+            'py-2 px-3 w-max md:px-6'       : width === 'max',
+            'place-self-end rounded-lg'     : rounded === 'normal',
+            'rounded-s-none rounded-e-full' : rounded === 'comment'
         }"
     >
         <slot/>

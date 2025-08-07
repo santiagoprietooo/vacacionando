@@ -103,6 +103,7 @@ export async function editMyProfile({displayName, bio, traveledTo}) {
             bio,
             traveledTo
         }
+
         notifyAll();
     } catch (error) {
         console.error("[auth.js editMyProfile] Error al tratar de editar el perfil: ", error);

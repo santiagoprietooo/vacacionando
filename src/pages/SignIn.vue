@@ -1,7 +1,10 @@
 <script setup>
 import HeaderTitle from '../components/HeaderTitle.vue';
-import InputWarning from '../components/InputWarning.vue';
+import TextInput from '../components/TextInput.vue';
+import PasswordInput from '../components/PasswordInput.vue';
 import SubmitButton from '../components/SubmitButton.vue';
+import AlertMessage from '../components/AlertMessage.vue';
+import InputWarning from '../components/InputWarning.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '../services/auth';
@@ -11,87 +14,85 @@ const user = ref({
     email: '',
     password: ''
 });
-const loading = ref(false);
-const credentials = ref(false);
-const showPassword = ref(false);
 
 function isValidEmail(email){
     const invalidChars = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return invalidChars.test(email);
 }
 
-function handlePassword() {
-    showPassword.value = !showPassword.value;
+const loadingStates = ref({
+    loading: false,
+    state: ''
+});
+
+function cleanLoadingState() {
+    loadingStates.value = {
+        loading: false,
+        state: ''
+    }
 }
 
 async function handleSubmit() {
-    loading.value = true;
+    loadingStates.value = {
+        loading: true,
+        state: 'signing_in'
+    };
 
     try {
         await login({...user.value});
-        router.push('/');
-        
-    } catch (error) {
-        console.error("[SignIn handleSubmit] Error al iniciar sesión: ", error);
-        credentials.value = true;
-    }
 
-    loading.value = false;
+        loadingStates.value = {
+            loading: true,
+            state: 'signed_in'
+        };
+
+        setTimeout(() => {
+            cleanLoadingState();
+            router.push('/');
+        }, 2000);
+    } catch (error) {
+        loadingStates.value = {
+            loading: false,
+            state: 'error_signing_in'
+        };
+    }
 }
 </script>
 
 <template>
-    <HeaderTitle text="Iniciar sesión" />
+    <HeaderTitle text="Iniciar sesión"/>
 
-    <section class="p-5">
+    <section class="p-4">
         <h2 class="sr-only">Datos a completar</h2>
 
-        <form action="#" @submit.prevent="handleSubmit" class="mt-8 flex flex-col items-center">
-            <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="email" class="w-max font-semibold">Email</label>
-                <input
-                    type="email" id="email"
-                    v-model="user.email"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                >
-                <InputWarning v-if="!isValidEmail(user.email)">
-                    Esta no es una dirección de correo valida.
-                </InputWarning>
-            </div>
+        <form @submit.prevent="handleSubmit" class="flex flex-col items-center gap-4">
+            <TextInput
+                use-for="correo-electrónico"
+                text="Correo Electrónico"
+                placeholder="ejemplo@email.com"
+                fill="on"
+                v-model="user.email"
+            />
 
-            <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="password" class="w-max font-semibold">Contraseña</label>
-                <div class="flex flex-row gap-1">
-                    <input
-                    :type="showPassword ? 'text' : 'password'"
-                    id="password"
-                    v-model="user.password"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                    >
-                    <button
-                        type="button"
-                        @click="handlePassword"
-                        class="w-24 bg-slate-600 font-semibold border-2 border-slate-600 rounded-lg transition-colors hover:bg-slate-700"
-                    >
-                        {{ showPassword ? 'Ocultar' : 'Mostrar' }}
-                    </button>
-                </div>
-                <InputWarning v-if="!user.password">
-                    Complete este campo.
-                </InputWarning>
-            </div>
+            <PasswordInput v-model="user.password"/>
 
-            <div class="flex flex-col w-full md:w-2/3 mt-8">
-                <SubmitButton
-                    :disabled="!user.email || !user.password"
-                    color="slate"
-                >
-                    Iniciar Sesión
+            <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
+                <SubmitButton width="max" :disabled="user.email.trim() === '' || !isValidEmail(user.email) || !user.password || user.password.length < 6 || loadingStates.loading">
+                    {{ loadingStates.loading ? "Iniciando Sesión..." : "Iniciar Sesión" }}
                 </SubmitButton>
-                <InputWarning v-if="credentials">
-                    Error en las credenciales. Revise los datos enviados.
-                </InputWarning>
             </div>
         </form>
     </section>
+
+    <AlertMessage
+        v-if="loadingStates.loading && loadingStates.state === 'signed_in'"
+        message="Se ha iniciado sesión correctamente. Redirigiendo..."
+        v-model="loadingStates.loading"
+    />
+
+    <AlertMessage
+        v-else-if="loadingStates.loading && loadingStates.state === 'error_signing_in'"
+        message="Error al iniciar sesión."
+        v-model="loadingStates.loading"
+    />
 </template>

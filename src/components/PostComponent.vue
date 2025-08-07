@@ -27,20 +27,20 @@ const isOnThatProfile = computed(() => {
 
 const comment = ref('');
 
-const loadinStates = ref({
+const loadingStates = ref({
     loading: false,
     state: ''
 });
 
 function cleanLoadingState() {
-    loadinStates.value = {
+    loadingStates.value = {
         loading: false,
         state: ''
     }
 }
 
 async function handleSubmitComment() {
-    loadinStates.value = {
+    loadingStates.value = {
         loading: true,
         state: 'sending_comment'
     };
@@ -48,7 +48,7 @@ async function handleSubmitComment() {
     try {
         await saveComment(postID, comment.value, props.loggedUser.id);
 
-        loadinStates.value = {
+        loadingStates.value = {
             loading: true,
             state: 'comment_sent'
         };
@@ -59,10 +59,14 @@ async function handleSubmitComment() {
 
         comment.value = '';
     } catch (error) {
-        cleanLoadingState();
+        loadingStates.value = {
+            loading: false,
+            state: 'error_saving_comment'
+        };
 
-        console.error("Error al enviar el comentario:", error);
-        throw error;
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 3000);
     }
 }
 
@@ -72,7 +76,7 @@ async function showUsersEmail(id) {
 }
 
 onMounted(async () => {
-    if (props.post.comments.length > 0) {
+    if (props.post?.comments?.length > 0) {
         for (const comment of props.post.comments) {
             await showUsersEmail(comment.user_id);
         }
@@ -180,23 +184,28 @@ onMounted(async () => {
                     :name="`comment-${post?.id}`"
                     :id="`comment-${post?.id}`"
                     v-model="comment"
-                    :disabled="!loggedUser?.id || loadinStates.loading && loadinStates.state === 'sending_comment'"
+                    :disabled="!loggedUser?.id || loadingStates.loading && loadingStates.state === 'sending_comment'"
                     rows="1"
                     placeholder="Comentar..."
                     class="px-4 py-2 w-full min-h-[43.2px] transition-colors bg-transparent border-2 border-slate-300 rounded-s-full border-opacity-35 outline-none resize-none text-slate-400 placeholder:text-slate-400 focus:border-opacity-100 focus:text-white focus:placeholder:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 />
 
                 <SubmitButton
-                    v-if="loggedUser.id !== null"
+                    v-if="!loggedUser || !loggedUser.id"
                     rounded="comment"
                     width="max"
-                    :disabled="comment.trim() === '' || loadinStates.loading && loadinStates.state === 'sending_comment'"
+                    disabled
                 >
                     <SendHorizontal class="block md:hidden" />
                     <span class="max-md:sr-only">Enviar</span>
                 </SubmitButton>
 
-                <SubmitButton rounded="comment" width="max" v-else disabled>
+                <SubmitButton
+                    v-else
+                    rounded="comment"
+                    width="max"
+                    :disabled="comment.trim() === '' || loadingStates.loading && loadingStates.state === 'sending_comment'"
+                >
                     <SendHorizontal class="block md:hidden" />
                     <span class="max-md:sr-only">Enviar</span>
                 </SubmitButton>
@@ -264,8 +273,14 @@ onMounted(async () => {
     </section>
 
     <AlertMessage
-        v-if="loadinStates.loading && loadinStates.state === 'comment_sent'"
+        v-if="loadingStates.loading && loadingStates.state === 'comment_sent'"
         message="Se envió el comentario"
-        v-model="loadinStates.loading"
+        v-model="loadingStates.loading"
+    />
+
+    <AlertMessage
+        v-else-if="loadingStates.loading && loadingStates.state === 'error_saving_comment'"
+        message="Error al haber enviado el comentario."
+        v-model="loadingStates.loading"
     />
 </template>

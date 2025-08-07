@@ -16,12 +16,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <nav class="fixed bottom-0 z-20 flex flex-row items-center justify-between w-screen bg-slate-800 border-t border-slate-500 lg:left-0 lg:flex-col lg:h-screen lg:w-44 lg:p-0 lg:py-5 lg:pr-6 lg:bg-slate-950/25 lg:border-t-0 lg:border-r">
+    <nav class="fixed bottom-0 z-20 flex flex-row items-center w-screen bg-slate-800 border-t border-slate-500 lg:left-0 lg:flex-col lg:justify-between lg:h-screen lg:w-44 lg:p-0 lg:py-5 lg:pr-6 lg:bg-slate-950/25 lg:border-t-0 lg:border-r">
         <RouterLink to="/" class="hidden lg:block">
             <img src="/icon/vacacionando-icon.png" alt='ícono de "Vacacionando".' class="w-20">
         </RouterLink>
 
-        <ul class="flex flex-row items-center lg:flex-col lg:gap-2">
+        <ul class="flex flex-row items-center justify-evenly w-full lg:flex-col lg:gap-2">
             <NavLink nav-to="Inicio" path="/" />
 
             <template v-if="!loggedUser.id">

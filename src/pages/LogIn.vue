@@ -1,103 +1,102 @@
 <script setup>
 import HeaderTitle from '../components/HeaderTitle.vue';
-import InputWarning from '../components/InputWarning.vue';
+import TextInput from '../components/TextInput.vue';
+import PasswordInput from '../components/PasswordInput.vue';
 import SubmitButton from '../components/SubmitButton.vue';
-import { newUser } from '../services/auth';
+import AlertMessage from '../components/AlertMessage.vue';
+import InputWarning from '../components/InputWarning.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { newUser } from '../services/auth';
 
 const router = useRouter();
 const createUser = ref({
     email: '',
     password: ''
 });
-const loading = ref(false);
-const credentials = ref(false);
-const showPassword = ref(false);
 
 function isValidEmail(email){
     const invalidChars = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return invalidChars.test(email);
 }
 
-function handlePassword() {
-    showPassword.value = !showPassword.value;
+const loadingStates = ref({
+    loading: false,
+    state: ''
+});
+
+function cleanLoadingState() {
+    loadingStates.value = {
+        loading: false,
+        state: ''
+    }
 }
 
 async function handleSubmit() {
-    loading.value = true;
+    loadingStates.value = {
+        loading: true,
+        state: 'logging_in'
+    };
 
     try {
         await newUser({ ...createUser.value });
-        router.push('/profile');
-    } catch (error) {
-        console.error("[LogIn handleSubmit] Error al crear cuenta: ", error);
-        credentials.value = true;
-    }
 
-    loading.value = false;
+        loadingStates.value = {
+            loading: true,
+            state: 'logged_in'
+        };
+
+        setTimeout(() => {
+            cleanLoadingState();
+            router.push('/');
+        }, 2000);
+    } catch (error) {
+        loadingStates.value = {
+            loading: false,
+            state: 'error_logging_in'
+        };
+
+        setTimeout(() => {
+            cleanLoadingState();
+        }, 3000);
+    }
 }
 </script>
 
 <template>
     <HeaderTitle text="Crear Cuenta" />
 
-    <section class="p-5">
+    <section class="p-4">
         <h2 class="sr-only">Datos a completar</h2>
 
-        <form
-            action="#"
-            @submit.prevent="handleSubmit"
-            class="mt-8 flex flex-col items-center"
-        >
-            <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="email" class="w-max font-semibold">Email</label>
-                <input
-                    type="email" id="email"
-                    v-model="createUser.email"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                >
-                <InputWarning v-if="!isValidEmail(createUser.email)">
-                    Esta no es una dirección de correo valida.
-                </InputWarning>
-            </div>
+        <form @submit.prevent="handleSubmit" class="flex flex-col items-center gap-4">
+            <TextInput
+                use-for="correo-electrónico"
+                text="Correo Electrónico"
+                placeholder="ejemplo@email.com"
+                fill="on"
+                v-model="createUser.email"
+            />
 
-            <div class="flex flex-col justify-center gap-1 mb-3 w-full md:w-2/3">
-                <label for="password" class="w-max font-semibold">Contraseña</label>
-                <div class="flex flex-row gap-1">
-                    <input
-                    :type="showPassword ? 'text' : 'password'"
-                    id="password"
-                    v-model="createUser.password"
-                    class="w-full p-2 bg-slate-800 border-2 border-slate-500 rounded-lg transition-colors outline-none focus:bg-slate-700 focus:text-white"
-                    >
-                    <button
-                        type="button"
-                        @click="handlePassword"
-                        class="w-24 bg-slate-600 font-semibold border-2 border-slate-600 rounded-lg transition-colors hover:bg-slate-700"
-                    >
-                        {{ showPassword ? 'Ocultar' : 'Mostrar' }}
-                    </button>
-                </div>
-                <InputWarning v-if="!createUser.password">
-                    Complete este campo.
-                </InputWarning>
-                <InputWarning v-else-if="createUser.password.length < 6">
-                    La contraseña debe tener al menos 6 carácteres.
-                </InputWarning>
-            </div>
+            <PasswordInput v-model="createUser.password"/>
 
-            <div class="flex flex-col w-full md:w-2/3 mt-8">
-                <SubmitButton
-                    :disabled="!createUser.email || !createUser.password || createUser.password.length < 6"
-                    color="slate"
-                >
-                    Crear Cuenta
+            <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
+                <SubmitButton width="max" :disabled="createUser.email.trim() === '' || !isValidEmail(createUser.email) || !createUser.password || createUser.password.length < 6 || loadingStates.loading">
+                    {{ loadingStates.loading ? "Creando Cuenta..." : "Crear Cuenta" }}
                 </SubmitButton>
-                <InputWarning v-if="credentials">
-                    Error al crear la cuenta.
-                </InputWarning>
             </div>
         </form>
     </section>
+
+    <AlertMessage
+        v-if="loadingStates.loading && loadingStates.state === 'logged_in'"
+        message="Se creó la cuenta correctamente. Redirigiendo..."
+        v-model="loadingStates.loading"
+    />
+
+    <AlertMessage
+        v-else-if="loadingStates.loading && loadingStates.state === 'error_logging_in'"
+        message="Error al crear la cuenta."
+        v-model="loadingStates.loading"
+    />
 </template>

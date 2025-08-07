@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@firebasegen/default": "file:generated/javascript/default",
+    "@vueuse/core": "^13.6.0",
     "firebase": "^10.14.1",
     "lucide-vue-next": "^0.445.0",
     "sass": "^1.89.2",
