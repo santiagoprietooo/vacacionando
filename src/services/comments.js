@@ -1,57 +1,55 @@
-import {
-    arrayUnion,
-    doc,
-    updateDoc,
-    getDoc
-} from "firebase/firestore";
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
  * Agrega un comentario a un post existente.
- * @param {String} postID
- * @param {String} comment
- * @param {String} userID
+ * @param {String} postID ID del post en el que se está comentando.
+ * @param {String} comment Comentario del usuario.
+ * @param {String} userID ID del usuario comentando.
  */
 export async function saveComment(postID, comment, userID) {
     if (!postID || !comment || !userID) {
         console.error("Faltan parámetros:", { postID, comment, userID });
-        return {
-            success: false,
-            message: "postID, comment y userID son requeridos.",
-        };
+        return;
     }
+
+    const trimmed = comment.trim();
+    if (!trimmed) {
+        return;
+    }
+
+    const commentData = {
+        comment: trimmed,
+        user_id: userID,
+        created_at: serverTimestamp(),
+    };
 
     try {
-        const postRef = doc(db, "posted-by-users", postID);
-        const snapshot = await getDoc(postRef);
-
-        if (!snapshot.exists()) {
-            console.error("Post no encontrado:", postID);
-            return { success: false, message: "Post no encontrado." };
-        }
-
-        const trimmed = comment.trim();
-        if (!trimmed) {
-            return { success: false, message: "Comentario vacío no permitido." };
-        }
-
-        const commentData = {
-            comment: trimmed,
-            user_id: userID,
-            created_at: new Date().toISOString(),
-        };
-
-        await updateDoc(postRef, {
-            comments: arrayUnion(commentData),
-        });
-
-        console.log("Comentario guardado correctamente en post", postID);
-        return { success: true, message: "Comentario guardado correctamente." };
+        const commentsRef = collection(db, "posted-by-users", postID, "comments");
+        await addDoc(commentsRef, commentData);
     } catch (error) {
         console.error("Error guardando el comentario:", error);
-        return {
-            success: false,
-            message: "Error interno al guardar el comentario.",
-        };
     }
+}
+
+/**
+ * Suscribe en tiempo real a los comentarios de un post
+ * @param {string} postID
+ * @param {function} callback - Recibe el array actualizado de comentarios
+ * @returns {function} - Función para cancelar la suscripción
+ */
+export function subscribeToComments(postID, callback) {
+    const commentsRef = collection(db, "posted-by-users", postID, "comments");
+    const q = query(commentsRef, orderBy("created_at", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const comments = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+
+        callback(comments);
+    });
+
+    return unsubscribe;
 }

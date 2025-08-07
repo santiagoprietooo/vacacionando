@@ -1,6 +1,6 @@
 <script setup>  
-import HeaderTitle from '../components/HeaderTitle.vue';
-import ReturnBtn from '../components/ReturnBtn.vue';
+import HeaderTitle from '../components/Tags/HeaderTitle.vue';
+import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
 import UserProfileComponent from '../components/UserProfileComponent.vue';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';

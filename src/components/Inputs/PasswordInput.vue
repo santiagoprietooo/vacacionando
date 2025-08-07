@@ -29,7 +29,7 @@ const val = defineModel({
             <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="p-2 bg-slate-500 font-semibold border-2 border-slate-500 rounded-lg transition-colors hover:bg-slate-600 focus:bg-slate-700"
+                class="p-2 bg-slate-500 font-semibold border-2 border-slate-500 rounded-lg outline-none transition-colors hover:bg-slate-600 focus:bg-slate-700"
             >
                 <template v-if="!showPassword">
                     <Eye class="size-5"/>

@@ -24,11 +24,11 @@ defineProps({
     <li>
         <RouterLink
             :to="path"
-            class="flex justify-center items-center p-2 bg-slate-800 transition-colors lg:justify-start lg:gap-2 lg:px-2 lg:h-14 lg:w-40 lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full lg:hover:bg-slate-700"
-            :class="{
-                'lg:bg-white lg:text-slate-800 lg:font-semibold'
-                : getRoute(path)
-            }"
+            class="flex justify-center items-center p-2 outline-none transition-colors lg:justify-start lg:gap-2 lg:px-2 lg:h-14 lg:w-40 lg:border-2 lg:border-transparent lg:rounded-tl-none lg:rounded-bl-none lg:rounded-tr-full lg:rounded-br-full"
+            :class="getRoute(path) ?
+                'lg:bg-white lg:text-slate-700 lg:text-lg lg:font-semibold lg:hover:bg-slate-200 lg:focus:bg-white/85' :
+                'bg-slate-800 lg:text-white lg:text-base lg:font-normal lg:hover:bg-slate-700 lg:focus:border-slate-500'
+            "
         >
             <House
                 v-if="navTo === 'Inicio'"

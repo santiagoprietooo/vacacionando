@@ -1,10 +1,10 @@
 <script setup>
-import HeaderTitle from '../components/HeaderTitle.vue';
-import ReturnBtn from '../components/ReturnBtn.vue';
-import TextInput from '../components/TextInput.vue';
-import TextareaInput from '../components/TextareaInput.vue';
-import SubmitButton from '../components/SubmitButton.vue';
-import AlertMessage from '../components/AlertMessage.vue';
+import HeaderTitle from '../components/Tags/HeaderTitle.vue';
+import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
+import TextInput from '../components/Inputs/TextInput.vue';
+import TextareaInput from '../components/Inputs/TextareaInput.vue';
+import SubmitButton from '../components/Buttons/SubmitButton.vue';
+import AlertMessage from '../components/Messages/AlertMessage.vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { editMyProfile, subscribeToAuthChanges } from '../services/auth';
@@ -40,6 +40,10 @@ onMounted(async () => {
         displayName: !loggedUser.value.displayName && !newUserData.displayName
             ? newUserData.email.slice(0, newUserData.email.indexOf("@"))
             : newUserData.displayName
+        ,
+        bio: !loggedUser.value.displayName && !newUserData.displayName
+            ? ''
+            : newUserData.bio
         ,
         traveledTo: Array.isArray(newUserData.traveledTo)
             ? newUserData.traveledTo
@@ -110,6 +114,7 @@ const handleSubmit = async () => {
                 fill="on"
                 placeholder="Usuario"
                 v-model="loggedUser.displayName"
+                :show-limit="false"
             />
 
             <TextareaInput
@@ -117,6 +122,7 @@ const handleSubmit = async () => {
                 text="Sobre mí"
                 placeholder="¡Soy un usuario de Vacacionando!"
                 v-model="loggedUser.bio"
+                :define-limit="500"
             />
 
             <div class="flex flex-col gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
@@ -131,7 +137,7 @@ const handleSubmit = async () => {
                 </div>
             </div>
 
-            <div class="flex flex-col gap-4 mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
+            <div class="flex justify-end gap-4 mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
                 <SubmitButton :disabled="loadingStates.loading || !loggedUser.displayName || loggedUser.displayName.trim() === ''">
                     {{ loadingStates.loading && loadingStates.state === 'updating_profile' ?
                         'Actualizando...' : 'Actualizar Perfil'
@@ -140,7 +146,7 @@ const handleSubmit = async () => {
 
                 <button
                     type="button"
-                    class="flex justify-center items-center px-6 py-2 w-full border-2 border-slate-200 text-white font-semibold rounded-lg transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex justify-center items-center px-6 py-2 w-max border-2 border-slate-200 text-white font-semibold rounded-lg outline-none transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     @click="router.push('/profile')"
                     :disabled="loadingStates.loading"
                 >

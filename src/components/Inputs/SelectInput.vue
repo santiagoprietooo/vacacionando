@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import InputWarning from './InputWarning.vue';
+import InputWarning from '../Messages/InputWarning.vue';
 
 const argProvinces = ref(null);
 

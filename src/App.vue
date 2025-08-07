@@ -1,9 +1,9 @@
 <script setup>
-import NavLink from './components/NavLink.vue';
-import FooterItem from './components/FooterItem.vue';
-import { subscribeToAuthChanges } from './services/auth';
+import NavLink from './components/Tags/NavLink.vue';
+import FooterItem from './components/Tags/FooterItem.vue';
 import { ref, onMounted } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
+import { subscribeToAuthChanges } from './services/auth';
 
 const loggedUser = ref({
     id: null,
@@ -11,13 +11,13 @@ const loggedUser = ref({
 });
 
 onMounted(() => {
-    subscribeToAuthChanges(newUserData => loggedUser.value = newUserData);
+    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
 });
 </script>
 
 <template>
-    <nav class="fixed bottom-0 z-20 flex flex-row items-center w-screen bg-slate-800 border-t border-slate-500 lg:left-0 lg:flex-col lg:justify-between lg:h-screen lg:w-44 lg:p-0 lg:py-5 lg:pr-6 lg:bg-slate-950/25 lg:border-t-0 lg:border-r">
-        <RouterLink to="/" class="hidden lg:block">
+    <nav class="fixed bottom-0 z-20 flex flex-row items-center py-1 w-screen bg-slate-800 border-t border-slate-500 lg:left-0 lg:flex-col lg:justify-between lg:h-screen lg:w-44 lg:p-0 lg:py-5 lg:pr-6 lg:bg-slate-950/25 lg:border-t-0 lg:border-r">
+        <RouterLink to="/" class="hidden rounded-full outline-none focus:shadow-md focus:shadow-white/50 lg:block">
             <img src="/icon/vacacionando-icon.png" alt='ícono de "Vacacionando".' class="w-20">
         </RouterLink>
 

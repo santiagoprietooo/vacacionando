@@ -1,17 +1,17 @@
 <script setup>
-import HeaderTitle from '../components/HeaderTitle.vue';
-import SubmitButton from '../components/SubmitButton.vue';
+import CloseButton from '../components/Buttons/CloseButton.vue';
+import TextInput from '../components/Inputs/TextInput.vue';
+import TextareaInput from '../components/Inputs/TextareaInput.vue';
+import SelectInput from '../components/Inputs/SelectInput.vue';
+import SubmitButton from '../components/Buttons/SubmitButton.vue';
+import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import PostComponent from '../components/PostComponent.vue';
-import PostingButton from '../components/PostingButton.vue';
-import CloseButton from '../components/CloseButton.vue';
-import FormField from '../components/SelectInput.vue';
+import PostingButton from '../components/Buttons/PostingButton.vue';
+import AlertMessage from '../components/Messages/AlertMessage.vue';
 import { onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { savePublicPost, readPublicPosts } from '../services/users-posts';
 import { subscribeToAuthChanges } from '../services/auth';
-import AlertMessage from '../components/AlertMessage.vue';
-import TextInput from '../components/TextInput.vue';
-import TextareaInput from '../components/TextareaInput.vue';
 
 const loggedUser = ref({
     id: null,
@@ -41,30 +41,24 @@ onMounted(() => {
     loadingStates.value = {
         loading: true,
         state: 'loading_posts'
-    };
+    }
 
     readPublicPosts(async (newPosts) => posts.value = await newPosts);
+
     subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
 });
 
-watch(posts, (newPosts) => {
-    if (newPosts.length > 0) {
+watch(posts, (newPost) => {
+    if (!posts.value || posts.value.length === 0) {
         cleanLoadingState();
     }
-}, { immediate: true });
+
+    if (newPost && loadingStates.value.loading === true && loadingStates.value.state === 'loading_posts') {
+        cleanLoadingState();
+    }
+});
 
 let isActive = ref(false);
-
-watch(isActive, (activeModal) => {
-    if (activeModal === false) {
-        newPosts.value = {
-            title: '',
-            description: '',
-            location: ''
-        }
-    }
-}, { immediate: true });
-
 let isActive2 = ref(false);
 
 async function handleSubmit() {
@@ -84,7 +78,6 @@ async function handleSubmit() {
         }
 
         setTimeout(() => {
-            isActive.value = false;
             cleanLoadingState();
         }, 3000);
 
@@ -103,6 +96,8 @@ async function handleSubmit() {
             cleanLoadingState();
         }, 3000);
     }
+
+    isActive.value = false;
 }
 </script>
 
@@ -120,6 +115,7 @@ async function handleSubmit() {
                 text="Título de la publicación"
                 placeholder="Mi viaje a..."
                 v-model="newPosts.title"
+                :define-limit="50"
             />
 
             <TextareaInput
@@ -127,16 +123,16 @@ async function handleSubmit() {
                 text="Descripción"
                 placeholder="¡La pasé increíble!"
                 v-model="newPosts.description"
+                :define-limit="500"
             />
 
-            <FormField v-model="newPosts.location"/>
+            <SelectInput v-model="newPosts.location"/>
 
             <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
                 <SubmitButton
-                    width="max"
-                    :disabled="loadingStates.loading && loadingStates.state === 'saving_post' || newPosts.title.trim() === '' || newPosts.description.trim() === '' || !newPosts.location"
+                    :disabled="loadingStates.state !== '' || newPosts.title.trim() === '' || newPosts.description.trim() === '' || !newPosts.location"
                 >
-                    {{ loadingStates.loading && loadingStates.state === 'saving_post' ? "Publicando..." : "Realizar publicación"}}
+                    {{ loadingStates.state !== '' ? "Publicando..." : "Realizar publicación"}}
                 </SubmitButton>
             </div>
         </form>
@@ -160,14 +156,14 @@ async function handleSubmit() {
                     <div class="flex flex-col items-center gap-2 mt-8 mb-2 text-center">
                         <RouterLink
                             to="/sign-in"
-                            class="p-2 w-3/4 lg:w-1/2 bg-slate-200 text-black font-semibold border-2 border-slate-200 rounded-full"
+                            class="p-2 w-3/4 lg:w-1/2 bg-slate-200 text-black font-semibold border-slate-200 rounded-full transition-all border-2 border-transparent outline-none hover:bg-slate-200 focus:bg-slate-500 focus:text-slate-100 focus:border-white"
                         >
                             Iniciar Sesión
                         </RouterLink>
 
                         <RouterLink
                             to="/log-in"
-                            class="p-2 w-3/4 lg:w-1/2 text-white font-semibold border-2 border-slate-200 rounded-full"
+                            class="p-2 w-3/4 lg:w-1/2 border-2 border-slate-200 text-white font-semibold rounded-full outline-none transition-all hover:bg-slate-200/10 focus:bg-slate-300/25"
                         >
                             Crear Cuenta
                         </RouterLink>
@@ -191,7 +187,15 @@ async function handleSubmit() {
                 </div>
             </template>
 
-            <PostingButton v-if="loggedUser.id !== null" v-model="isActive" />
+            <template v-if="!posts || posts.length === 0 && !loadingStates.loading && loadingStates.state === ''">
+                <div class="flex items-center justify-center p-4">
+                    <p class="text-slate-400 text-sm">
+                        No hay publicaciones aún. ¡Convertite en el primero en crear una!
+                    </p>
+                </div>
+            </template>
+
+            <PostingButton v-if="loggedUser.id !== null" :disabled="loadingStates.state === 'post_saved'" v-model="isActive" />
 
             <PostingButton v-else v-model="isActive2" />
         </section>

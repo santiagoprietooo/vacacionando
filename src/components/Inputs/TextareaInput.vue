@@ -1,5 +1,6 @@
 <script setup>
 import { useTextareaAutosize } from '@vueuse/core';
+import InputLength from './InputLength.vue';
 
 const val = defineModel({
     type: String,
@@ -20,6 +21,14 @@ const props = defineProps({
     placeholder: {
         type: String,
         default: ''
+    },
+    showLimit: {
+        type: Boolean,
+        default: true
+    },
+    defineLimit: {
+        type: Number,
+        required: false
     }
 });
 </script>
@@ -34,10 +43,17 @@ const props = defineProps({
             :name="useFor"
             :id="useFor"
             :placeholder="placeholder"
+            :maxlength="defineLimit"
             rows="1"
             class="p-2 w-full bg-slate-800 border-2 border-slate-500 rounded-lg outline-none overflow-hidden resize-none transition-colors hover:bg-slate-600/25 focus:bg-slate-700 placeholder:text-slate-400"
             ref="textarea"
             v-model="val"
+        />
+
+        <InputLength
+            v-if="showLimit"
+            :chars="val?.length"
+            :limit="defineLimit"
         />
     </div>
 </template>

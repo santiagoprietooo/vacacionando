@@ -9,7 +9,7 @@ defineProps({
 
 <template>
     <li v-if="text !== '&copy; 2024 - Vacacionando'">
-        <RouterLink to="#" class="hover:underline">
+        <RouterLink to="#" class="outline-none hover:underline focus:underline">
             {{ text }}
         </RouterLink>
     </li>

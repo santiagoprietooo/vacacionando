@@ -1,10 +1,10 @@
 <script setup>
-import HeaderTitle from '../components/HeaderTitle.vue';
+import HeaderTitle from '../components/Tags/HeaderTitle.vue';
+import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
+import AlertMessage from '../components/Messages/AlertMessage.vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout, subscribeToAuthChanges } from '../services/auth';
-import AlertMessage from '../components/AlertMessage.vue';
-import ReturnBtn from '../components/ReturnBtn.vue';
 
 const router = useRouter();
 
@@ -75,7 +75,7 @@ const handleLogout = async () => {
             <button 
                 type="submit"
                 :disabled="!loggedUser.id || loadingStates.loading && loadingStates.state === 'logging_out'" 
-                class="flex place-self-end p-2 bg-red-800/70 font-semibold border-2 border-red-400 rounded-lg transition-colors hover:bg-red-700/70 focus:bg-red-900/70 :disabled:bg-red-600/70 disabled:cursor-not-allowed disabled:opacity-50"
+                class="flex place-self-end p-2 bg-red-800/70 font-semibold border-2 border-red-400 rounded-lg outline-none transition-colors hover:bg-red-700/70 focus:bg-red-800/80 focus:border-red-100 :disabled:bg-red-600/70 disabled:cursor-not-allowed disabled:opacity-50"
             >
                 {{ loadingStates.loading ? "Cerrando sesión" : "Cerrar Sesión" }}
             </button>

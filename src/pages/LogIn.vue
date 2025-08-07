@@ -1,10 +1,10 @@
 <script setup>
-import HeaderTitle from '../components/HeaderTitle.vue';
-import TextInput from '../components/TextInput.vue';
-import PasswordInput from '../components/PasswordInput.vue';
-import SubmitButton from '../components/SubmitButton.vue';
-import AlertMessage from '../components/AlertMessage.vue';
-import InputWarning from '../components/InputWarning.vue';
+import HeaderTitle from '../components/Tags/HeaderTitle.vue';
+import TextInput from '../components/Inputs/TextInput.vue';
+import PasswordInput from '../components/Inputs/PasswordInput.vue';
+import SubmitButton from '../components/Buttons/SubmitButton.vue';
+import AlertMessage from '../components/Messages/AlertMessage.vue';
+import InputWarning from '../components/Messages/InputWarning.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { newUser } from '../services/auth';
@@ -76,12 +76,13 @@ async function handleSubmit() {
                 placeholder="ejemplo@email.com"
                 fill="on"
                 v-model="createUser.email"
+                :show-limit="false"
             />
 
             <PasswordInput v-model="createUser.password"/>
 
             <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
-                <SubmitButton width="max" :disabled="createUser.email.trim() === '' || !isValidEmail(createUser.email) || !createUser.password || createUser.password.length < 6 || loadingStates.loading">
+                <SubmitButton :disabled="createUser.email.trim() === '' || !isValidEmail(createUser.email) || !createUser.password || createUser.password.length < 6 || loadingStates.loading">
                     {{ loadingStates.loading ? "Creando Cuenta..." : "Crear Cuenta" }}
                 </SubmitButton>
             </div>
