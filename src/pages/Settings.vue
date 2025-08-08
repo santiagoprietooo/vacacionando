@@ -5,6 +5,7 @@ import AlertMessage from '../components/Messages/AlertMessage.vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { logout, subscribeToAuthChanges } from '../services/auth';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const router = useRouter();
 
@@ -17,20 +18,10 @@ onMounted(() => {
     subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
 });
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 const handleLogout = async () => {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'logging_out'
     }
@@ -38,7 +29,7 @@ const handleLogout = async () => {
     try {
         await logout();
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'logged_out'
         }
@@ -48,7 +39,7 @@ const handleLogout = async () => {
             router.push('/');
         }, 2000);
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_logging_out'
         };
@@ -74,23 +65,23 @@ const handleLogout = async () => {
         <form @submit.prevent="handleLogout" class="p-4">
             <button 
                 type="submit"
-                :disabled="!loggedUser.id || loadingStates.loading && loadingStates.state === 'logging_out'" 
+                :disabled="!loggedUser.id || loadingState.loading && loadingState.state === 'logging_out'" 
                 class="flex place-self-end p-2 bg-red-800/70 font-semibold border-2 border-red-400 rounded-lg outline-none transition-colors hover:bg-red-700/70 focus:bg-red-800/80 focus:border-red-100 :disabled:bg-red-600/70 disabled:cursor-not-allowed disabled:opacity-50"
             >
-                {{ loadingStates.loading ? "Cerrando sesión" : "Cerrar Sesión" }}
+                {{ loadingState.loading ? "Cerrando sesión" : "Cerrar Sesión" }}
             </button>
         </form>
     </section>
 
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'logged_out'"
+        v-if="loadingState.loading && loadingState.state === 'logged_out'"
         message="Se cerró la sesión. Redirigiendo..."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="loadingStates.loading && loadingStates.state === 'error_logging_out'"
+        v-else-if="loadingState.loading && loadingState.state === 'error_logging_out'"
         message="Error al cerrar sesión."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

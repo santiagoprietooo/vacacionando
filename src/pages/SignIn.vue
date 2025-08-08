@@ -8,6 +8,7 @@ import InputWarning from '../components/Messages/InputWarning.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '../services/auth';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const router = useRouter();
 const user = ref({
@@ -20,20 +21,10 @@ function isValidEmail(email){
     return invalidChars.test(email);
 }
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 async function handleSubmit() {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'signing_in'
     };
@@ -41,7 +32,7 @@ async function handleSubmit() {
     try {
         await login({...user.value});
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'signed_in'
         };
@@ -51,7 +42,7 @@ async function handleSubmit() {
             router.push('/');
         }, 2000);
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_signing_in'
         };
@@ -78,22 +69,22 @@ async function handleSubmit() {
             <PasswordInput v-model="user.password"/>
 
             <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
-                <SubmitButton :disabled="user.email.trim() === '' || !isValidEmail(user.email) || !user.password || user.password.length < 6 || loadingStates.loading">
-                    {{ loadingStates.loading ? "Iniciando Sesión..." : "Iniciar Sesión" }}
+                <SubmitButton :disabled="user.email.trim() === '' || !isValidEmail(user.email) || !user.password || user.password.length < 6 || loadingState.loading">
+                    {{ loadingState.loading ? "Iniciando Sesión..." : "Iniciar Sesión" }}
                 </SubmitButton>
             </div>
         </form>
     </section>
 
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'signed_in'"
+        v-if="loadingState.loading && loadingState.state === 'signed_in'"
         message="Se ha iniciado sesión correctamente. Redirigiendo..."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="loadingStates.loading && loadingStates.state === 'error_signing_in'"
+        v-else-if="loadingState.loading && loadingState.state === 'error_signing_in'"
         message="Error al iniciar sesión."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

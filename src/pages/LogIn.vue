@@ -8,6 +8,7 @@ import InputWarning from '../components/Messages/InputWarning.vue';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { newUser } from '../services/auth';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const router = useRouter();
 const createUser = ref({
@@ -20,20 +21,10 @@ function isValidEmail(email){
     return invalidChars.test(email);
 }
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 async function handleSubmit() {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'logging_in'
     };
@@ -41,7 +32,7 @@ async function handleSubmit() {
     try {
         await newUser({ ...createUser.value });
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'logged_in'
         };
@@ -51,7 +42,7 @@ async function handleSubmit() {
             router.push('/');
         }, 2000);
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_logging_in'
         };
@@ -82,22 +73,22 @@ async function handleSubmit() {
             <PasswordInput v-model="createUser.password"/>
 
             <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
-                <SubmitButton :disabled="createUser.email.trim() === '' || !isValidEmail(createUser.email) || !createUser.password || createUser.password.length < 6 || loadingStates.loading">
-                    {{ loadingStates.loading ? "Creando Cuenta..." : "Crear Cuenta" }}
+                <SubmitButton :disabled="createUser.email.trim() === '' || !isValidEmail(createUser.email) || !createUser.password || createUser.password.length < 6 || loadingState.loading">
+                    {{ loadingState.loading ? "Creando Cuenta..." : "Crear Cuenta" }}
                 </SubmitButton>
             </div>
         </form>
     </section>
 
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'logged_in'"
+        v-if="loadingState.loading && loadingState.state === 'logged_in'"
         message="Se creó la cuenta correctamente. Redirigiendo..."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="loadingStates.loading && loadingStates.state === 'error_logging_in'"
+        v-else-if="loadingState.loading && loadingState.state === 'error_logging_in'"
         message="Error al crear la cuenta."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

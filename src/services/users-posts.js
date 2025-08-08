@@ -1,13 +1,15 @@
 import { doc, addDoc, getDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "./firebase";
+import { supabase } from './supabase';
 
 /**
  * Función para guardar un post público en la base de datos.
- * @param {{ title: string, description: string, location: string }} newPost
+ * @param {{ title: string, description: string, location: string }} newPost Detalles del post.
+ * @param {File} file Foto a subir.
  * @return {Promise}
  **/
 
-export async function savePublicPost({ title, description, location }) {
+export async function savePublicPost({ title, description, location }, file) {
   const user = auth.currentUser;
 
   if (!user) {
@@ -16,11 +18,29 @@ export async function savePublicPost({ title, description, location }) {
     return
   }
 
+  let imageURL;
+
+  if (!file) {
+    file = null;
+  } else {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage.from('post-images').upload(fileName, file);
+  
+    if (uploadError) {
+      console.error("Error al subir foto: ", uploadError);
+      throw uploadError
+    };
+  
+    const { data: publicURLdata } = supabase.storage.from('post-images').getPublicUrl(fileName);
+    imageURL = publicURLdata.publicUrl;
+  }
+
   const usersPosts = collection(db, 'posted-by-users');
 
   await addDoc(usersPosts, {
     title,
     description,
+    photo: !file ? null : imageURL,
     location,
     comments: [],
     user_id: user.uid,
@@ -43,6 +63,7 @@ export function readPublicPosts(callback){
               id: doc.id,
               title: doc.data().title,
               description: doc.data().description,
+              photo: doc.data().photo,
               location: doc.data().location,
               comments: doc.data().comments,
               user_id: doc.data().user_id,
@@ -74,6 +95,7 @@ export async function getPostById(id, callback){
         id: snapshot.id,
         title: snapshot.data().title,
         description: snapshot.data().description,
+        photo: snapshot.data().photo,
         location: snapshot.data().location,
         comments: snapshot.data().comments,
         user_id: snapshot.data().user_id,

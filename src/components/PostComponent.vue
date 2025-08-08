@@ -1,11 +1,13 @@
 <script setup>
 import SubmitButton from './Buttons/SubmitButton.vue';
+import CloseButton from './Buttons/CloseButton.vue';
 import AlertMessage from './Messages/AlertMessage.vue';
-import { MapPin, SendHorizontal, UserRound } from 'lucide-vue-next';
+import { MapPin, SendHorizontal, UserRound, X } from 'lucide-vue-next';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { saveComment, subscribeToComments } from '../services/comments';
 import { getUserEmail } from '../services/user-profile';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const props = defineProps({
     post: {
@@ -29,28 +31,18 @@ const comment = ref('');
 const comments = ref([]);
 const userNames = ref([]);
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 watch(comments, (newComment) => {
     if (!newComment) return;
 
-    if (newComment && loadingStates.value.loading === true && loadingStates.value.state === 'loading_comments') {
+    if (newComment && loadingState.value.loading === true && loadingState.value.state === 'loading_comments') {
         cleanLoadingState();
     }
 });
 
 async function handleSubmitComment() {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'sending_comment'
     };
@@ -58,7 +50,7 @@ async function handleSubmitComment() {
     try {
         await saveComment(postID, comment.value, props.loggedUser.id);
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'comment_sent'
         };
@@ -69,7 +61,7 @@ async function handleSubmitComment() {
 
         comment.value = '';
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_saving_comment'
         };
@@ -89,10 +81,17 @@ async function showUsersEmail(id) {
     }
 }
 
+const openedImage = ref('');
+function openIMG(img) {
+    if (!img) return;
+
+    openedImage.value = img;
+}
+
 let unsubscribeComments = null;
 
 onMounted(() => {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'loading_comments'
     }
@@ -117,7 +116,7 @@ onBeforeUnmount(() => {
     <div
         class="flex flex-col items-start gap-4 p-4 w-full border-b border-slate-500 transition-colors last:border-b-0"
         :class="{
-            'hover:bg-slate-800': route.path === '/'
+            'hover:bg-slate-800/40': route.path === '/'
         }"
     >
         <div class="flex flex-row items-center gap-2 w-max hover:underline">
@@ -156,7 +155,18 @@ onBeforeUnmount(() => {
                     <h3 class="text-xl font-medium">{{ post?.title }}</h3>
                     <p class="text-base font-normal">{{ post?.description }}</p>
 
-                    <div class="flex items-center gap-1 mt-4">
+                    <figure v-if="post?.photo" class="mt-4">
+                        <div
+                            class="size-[420px] bg-center bg-no-repeat bg-cover border-2 border-transparent rounded-xl outline-none max-sm:h-[320px] max-sm:w-full cursor-pointer focus:border-slate-300/50"
+                            tabindex="0"
+                            role="img"
+                            :style="{ backgroundImage: `url(${post?.photo})` }"
+                            :aria-label="`Imagen de la publicación de ${post?.user_email}`"
+                            @click="openIMG(post?.photo)"
+                        />
+                    </figure>
+
+                    <div class="flex items-center gap-1" :class="!post?.photo ? 'mt-4' : 'mt-2'">
                         <MapPin class="size-4 stroke-[1.5]" aria-roledescription="ícono de ubicación" />
                         <p class="text-sm font-thin">{{ post?.location }}</p>
                     </div>
@@ -183,7 +193,18 @@ onBeforeUnmount(() => {
                     <h3 class="text-xl font-medium">{{ post?.title }}</h3>
                     <p class="text-base font-normal">{{ post?.description }}</p>
 
-                    <div class="flex items-center gap-1 mt-4">
+                    <figure v-if="post?.photo" class="mt-4">
+                        <div
+                            class="size-[420px] bg-center bg-no-repeat bg-cover border-2 border-transparent rounded-xl outline-none max-sm:h-[320px] max-sm:w-full cursor-pointer focus:border-slate-300/50"
+                            tabindex="0"
+                            role="img"
+                            :style="{ backgroundImage: `url(${post?.photo})` }"
+                            :aria-label="`Imagen de la publicación de ${post?.user_email}`"
+                            @click="openIMG(post?.photo)"
+                        />
+                    </figure>
+
+                    <div class="flex items-center gap-1" :class="!post?.photo ? 'mt-4' : 'mt-2'">
                         <MapPin class="size-4 stroke-[1.5]" aria-roledescription="ícono de ubicación" />
                         <p class="text-sm font-thin">{{ post?.location }}</p>
                     </div>
@@ -211,7 +232,7 @@ onBeforeUnmount(() => {
                     :name="`comment-${post?.id}`"
                     :id="`comment-${post?.id}`"
                     v-model="comment"
-                    :disabled="!loggedUser?.id || loadingStates.state === 'sending_comment'"
+                    :disabled="!loggedUser?.id || loadingState.state === 'sending_comment'"
                     rows="1"
                     placeholder="Comentar..."
                     class="px-4 py-2 w-full min-h-[43.2px] transition-colors bg-transparent border-2 border-slate-300 rounded-s-full border-opacity-35 outline-none resize-none text-slate-400 placeholder:text-slate-400 focus:border-opacity-100 focus:text-white focus:placeholder:text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -222,7 +243,7 @@ onBeforeUnmount(() => {
                     <span class="max-md:sr-only">Enviar</span>
                 </SubmitButton>
 
-                <SubmitButton v-else rounded="comment" :disabled="comment.trim() === '' || loadingStates.state === 'sending_comment'">
+                <SubmitButton v-else rounded="comment" :disabled="comment.trim() === '' || loadingState.state === 'sending_comment'">
                     <SendHorizontal class="block md:hidden" />
                     <span class="max-md:sr-only">Enviar</span>
                 </SubmitButton>
@@ -284,7 +305,7 @@ onBeforeUnmount(() => {
             </ul>
         </template>
 
-        <template v-else-if="!comments && loadingStates.loading && loadingStates.state === 'loading_comments'">
+        <template v-else-if="!comments && loadingState.loading && loadingState.state === 'loading_comments'">
             <div class="flex items-center justify-center p-4">
                 <p class="text-xl text-center font-semibold">
                     Cargando...
@@ -301,15 +322,36 @@ onBeforeUnmount(() => {
         </template>
     </section>
 
+    <template v-if="openedImage !== ''">
+        <div class="fixed z-50 inset-0 bg-black/75 overflow-auto flex items-center justify-center p-4">
+            <button
+                type="button"
+                class="fixed z-50 top-4 right-4 place-self-end p-2 rounded-full outline-none transition-colors hover:bg-slate-50/15 focus:bg-slate-50/25"
+                @click="openedImage = ''"
+                aria-label="Cerrar foto"
+            >
+                <X class="text-white"/>
+            </button>
+
+            <figure class="px-4">
+                <img
+                    :src="openedImage"
+                    :alt="'Imagen de publicación'"
+                    class="max-h-[90vh] max-w-full object-contain"
+                >
+            </figure>
+        </div>
+    </template>
+
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'comment_sent'"
+        v-if="loadingState.loading && loadingState.state === 'comment_sent'"
         message="Se envió el comentario"
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="!loadingStates.loading && loadingStates.state === 'error_saving_comment'"
+        v-else-if="!loadingState.loading && loadingState.state === 'error_saving_comment'"
         message="Error al haber enviado el comentario."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

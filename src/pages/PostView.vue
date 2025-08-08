@@ -7,6 +7,7 @@ import { useRoute } from 'vue-router';
 import { subscribeToAuthChanges } from '../services/auth';
 import { getPostById } from '../services/users-posts';
 import { getUserEmail } from '../services/user-profile';
+import { useLoadingState } from '../composables/useLoadingState';
 
 onMounted(() => {
     subscribeToAuthChanges((newUserData) => loggedUser.value = newUserData);
@@ -30,13 +31,10 @@ const post = ref({
     created_at: ''
 });
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
+const { loadingState } = useLoadingState();
 
 onMounted(async () => {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'loading_post'
     };
@@ -45,7 +43,7 @@ onMounted(async () => {
         await getPostById(postID, async (p) => {
             post.value = await p;
 
-            loadingStates.value = {
+            loadingState.value = {
                 loading: false,
                 state: 'post_loaded'
             };
@@ -55,7 +53,7 @@ onMounted(async () => {
             }
         });
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_finding_post'
         };
@@ -72,18 +70,18 @@ onMounted(async () => {
         </HeaderTitle>
 
         <PostComponent
-            v-if="!loadingStates.loading && loadingStates.state === 'post_loaded' && post"
+            v-if="!loadingState.loading && loadingState.state === 'post_loaded' && post"
             :post="post"
             :logged-user="loggedUser"
         />
 
-        <div v-else-if="loadingStates.loading && loadingStates.state === 'loading_post'" class="flex items-center justify-center p-4">
+        <div v-else-if="loadingState.loading && loadingState.state === 'loading_post'" class="flex items-center justify-center p-4">
             <p class="text-xl text-center font-semibold">
                 Cargando...
             </p>
         </div>
 
-        <div v-else-if="!loadingStates.loading && loadingStates.state === 'error_finding_post'" class="flex items-center justify-center p-4">
+        <div v-else-if="!loadingState.loading && loadingState.state === 'error_finding_post'" class="flex items-center justify-center p-4">
             <p class="text-xl text-center font-semibold">
                 Esta publicación no existe.
             </p>

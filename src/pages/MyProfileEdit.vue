@@ -8,6 +8,7 @@ import AlertMessage from '../components/Messages/AlertMessage.vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { editMyProfile, subscribeToAuthChanges } from '../services/auth';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const router = useRouter();
 
@@ -54,20 +55,10 @@ onMounted(async () => {
     await getProvinces();
 });
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 const handleSubmit = async () => {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'updating_profile'
     };
@@ -75,7 +66,7 @@ const handleSubmit = async () => {
     try {
         await editMyProfile({ ...loggedUser.value });
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'profile_updated'
         };
@@ -85,7 +76,7 @@ const handleSubmit = async () => {
             router.push('/profile');
         }, 3000);
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'error_updating_profile'
         };
@@ -138,8 +129,8 @@ const handleSubmit = async () => {
             </div>
 
             <div class="flex justify-end gap-4 mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
-                <SubmitButton :disabled="loadingStates.loading || !loggedUser.displayName || loggedUser.displayName.trim() === ''">
-                    {{ loadingStates.loading && loadingStates.state === 'updating_profile' ?
+                <SubmitButton :disabled="loadingState.loading || !loggedUser.displayName || loggedUser.displayName.trim() === ''">
+                    {{ loadingState.loading && loadingState.state === 'updating_profile' ?
                         'Actualizando...' : 'Actualizar Perfil'
                     }}
                 </SubmitButton>
@@ -148,7 +139,7 @@ const handleSubmit = async () => {
                     type="button"
                     class="flex justify-center items-center px-6 py-2 w-max border-2 border-slate-200 text-white font-semibold rounded-lg outline-none transition-all hover:bg-slate-200/10 focus:bg-slate-300/25 disabled:hover:bg-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     @click="router.push('/profile')"
-                    :disabled="loadingStates.loading"
+                    :disabled="loadingState.loading"
                 >
                     Cancelar
                 </button>
@@ -157,14 +148,14 @@ const handleSubmit = async () => {
     </section>
 
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'profile_updated'"
+        v-if="loadingState.loading && loadingState.state === 'profile_updated'"
         message="Perfil actualizado correctamente. Redirigiendo..."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="loadingStates.loading && loadingStates.state === 'error_updating_profile'"
+        v-else-if="loadingState.loading && loadingState.state === 'error_updating_profile'"
         message="Error al actualizar el perfil."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

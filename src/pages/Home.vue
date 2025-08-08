@@ -8,10 +8,12 @@ import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import PostComponent from '../components/PostComponent.vue';
 import PostingButton from '../components/Buttons/PostingButton.vue';
 import AlertMessage from '../components/Messages/AlertMessage.vue';
+import { X } from 'lucide-vue-next';
 import { onMounted, ref, watch } from 'vue';
 import { RouterLink } from 'vue-router';
 import { savePublicPost, readPublicPosts } from '../services/users-posts';
 import { subscribeToAuthChanges } from '../services/auth';
+import { useLoadingState } from '../composables/useLoadingState';
 
 const loggedUser = ref({
     id: null,
@@ -20,25 +22,19 @@ const loggedUser = ref({
 
 const posts = ref([]);
 const newPosts = ref({
-    title : '',
-    description : '',
-    location : ''
+    title: '',
+    description: '',
+    location: ''
+});
+const file = ref({
+    preview: null,
+    photo: null
 });
 
-const loadingStates = ref({
-    loading: false,
-    state: ''
-});
-
-function cleanLoadingState() {
-    loadingStates.value = {
-        loading: false,
-        state: ''
-    }
-}
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 onMounted(() => {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'loading_posts'
     }
@@ -53,7 +49,7 @@ watch(posts, (newPost) => {
         cleanLoadingState();
     }
 
-    if (newPost && loadingStates.value.loading === true && loadingStates.value.state === 'loading_posts') {
+    if (newPost && loadingState.value.loading === true && loadingState.value.state === 'loading_posts') {
         cleanLoadingState();
     }
 });
@@ -61,8 +57,19 @@ watch(posts, (newPost) => {
 let isActive = ref(false);
 let isActive2 = ref(false);
 
+const handleChange = (e) => {
+    file.value.photo = e.target.files[0];
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+        file.value.preview = reader.result;
+    });
+
+    reader.readAsDataURL(file.value.photo);
+}
+
 async function handleSubmit() {
-    loadingStates.value = {
+    loadingState.value = {
         loading: true,
         state: 'saving_post'
     }
@@ -70,9 +77,9 @@ async function handleSubmit() {
     try {
         await savePublicPost({
             ...newPosts.value
-        });
+        }, file.value.photo);
 
-        loadingStates.value = {
+        loadingState.value = {
             loading: true,
             state: 'post_saved'
         }
@@ -86,8 +93,13 @@ async function handleSubmit() {
             description: '',
             location: ''
         };
+
+        file.value = {
+            preview: null,
+            photo: null
+        }
     } catch (error) {
-        loadingStates.value = {
+        loadingState.value = {
             loading: false,
             state: 'error_saving_post'
         };
@@ -112,7 +124,7 @@ async function handleSubmit() {
 
             <TextInput
                 use-for="título"
-                text="Título de la publicación"
+                text="Título de la publicación *"
                 placeholder="Mi viaje a..."
                 v-model="newPosts.title"
                 :define-limit="50"
@@ -120,19 +132,45 @@ async function handleSubmit() {
 
             <TextareaInput
                 use-for="descripción"
-                text="Descripción"
+                text="Descripción *"
                 placeholder="¡La pasé increíble!"
                 v-model="newPosts.description"
                 :define-limit="500"
             />
 
+            <div class="flex flex-col gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
+                <template v-if="!file.photo">
+                    <label for="foto" class="w-max font-semibold">Foto</label>
+                    <input type="file" name="foto" id="foto" class="p-2 w-full bg-slate-800 border-2 border-slate-500 rounded-lg outline-none transition-colors hover:bg-slate-600/25 focus:bg-slate-700 placeholder:text-slate-400"  @change="handleChange">
+                </template>
+
+                <template v-else>
+                    <span class="w-max font-semibold">Foto</span>
+                    <div
+                        class="relative size-[120px] bg-center bg-no-repeat bg-cover border-2 border-slate-500 rounded-lg max-sm:h-[320px] max-sm:w-full"
+                        :style="{ backgroundImage: `url(${file.preview})` }"
+                        role="img"
+                        :aria-label="`Vista previa de la foto seleccionada`"
+                    >
+                        <button
+                            type="button"
+                            class="absolute z-10 top-1 right-1 place-self-end p-1 rounded-full outline-none transition-colors hover:bg-slate-50/15 focus:bg-slate-50/25"
+                            @click="file = { preview: null, photo: null }"
+                            aria-label="Eliminar foto"
+                        >
+                            <X class="size-5 text-white"/>
+                        </button>
+                    </div>
+                </template>
+            </div>
+
             <SelectInput v-model="newPosts.location"/>
 
             <div class="flex flex-col mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
                 <SubmitButton
-                    :disabled="loadingStates.state !== '' || newPosts.title.trim() === '' || newPosts.description.trim() === '' || !newPosts.location"
+                    :disabled="loadingState.state !== '' || newPosts.title.trim() === '' || newPosts.description.trim() === '' || !newPosts.location"
                 >
-                    {{ loadingStates.state !== '' ? "Publicando..." : "Realizar publicación"}}
+                    {{ loadingState.state !== '' ? "Publicando..." : "Realizar publicación"}}
                 </SubmitButton>
             </div>
         </form>
@@ -179,7 +217,7 @@ async function handleSubmit() {
                 <PostComponent :post="post" :logged-user="loggedUser" />
             </template>
 
-            <template v-if="loadingStates.loading && loadingStates.state === 'loading_posts'">
+            <template v-if="loadingState.loading && loadingState.state === 'loading_posts'">
                 <div class="flex items-center justify-center p-4">
                     <p class="text-xl text-center font-semibold">
                         Cargando...
@@ -187,7 +225,7 @@ async function handleSubmit() {
                 </div>
             </template>
 
-            <template v-if="!posts || posts.length === 0 && !loadingStates.loading && loadingStates.state === ''">
+            <template v-if="!posts || posts.length === 0 && !loadingState.loading && loadingState.state === ''">
                 <div class="flex items-center justify-center p-4">
                     <p class="text-slate-400 text-sm">
                         No hay publicaciones aún. ¡Convertite en el primero en crear una!
@@ -195,20 +233,20 @@ async function handleSubmit() {
                 </div>
             </template>
 
-            <PostingButton v-if="loggedUser.id !== null" :disabled="loadingStates.state === 'post_saved'" v-model="isActive" />
+            <PostingButton v-if="loggedUser.id !== null" :disabled="loadingState.state === 'post_saved'" v-model="isActive" />
 
             <PostingButton v-else v-model="isActive2" />
         </section>
     </section>
 
     <AlertMessage
-        v-if="loadingStates.loading && loadingStates.state === 'post_saved'"
-        v-model="loadingStates.loading"
+        v-if="loadingState.loading && loadingState.state === 'post_saved'"
+        v-model="loadingState.loading"
     />
 
     <AlertMessage
-        v-else-if="loadingStates.loading && loadingStates.state === 'error_saving_post'"
+        v-else-if="loadingState.loading && loadingState.state === 'error_saving_post'"
         message="Error al crear la publicación."
-        v-model="loadingStates.loading"
+        v-model="loadingState.loading"
     />
 </template>

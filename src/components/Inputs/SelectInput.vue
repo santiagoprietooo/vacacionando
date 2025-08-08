@@ -20,7 +20,7 @@ const val = defineModel();
 <template>
     <div class="flex flex-col gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
         <label for="provincia" class="w-max font-semibold">
-            Provincia
+            Provincia *
         </label>
 
         <select
