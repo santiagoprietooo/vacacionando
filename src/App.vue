@@ -37,7 +37,8 @@ onMounted(() => {
     </nav>
 
     <main class="lg:absolute lg:left-44 lg:right-44 lg:z-20">
-        <RouterView></RouterView>
+        <RouterView>
+        </RouterView>
     </main>
 
     <footer class="hidden bg-slate-950/25 lg:px-3 lg:py-5 lg:h-screen lg:flex lg:flex-col lg:items-center lg:justify-end lg:min-w-44 lg:fixed lg:right-0 lg:border-l lg:border-slate-500">
