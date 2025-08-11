@@ -2,29 +2,20 @@
 import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
 import UserProfileComponent from '../components/UserProfileComponent.vue';
+import Loader from '../components/Loader/Loader.vue';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { subscribeToAuthChanges } from '../services/auth';
 import { getUserProfileById } from '../services/user-profile';
 
 const route = useRoute();
 const userId = route.params.id;
-
-const loggedUser = ref({
-    id: null,
-    email: null
-});
 
 const userProfile = ref(null);
 
 const loading = ref(false);
 const error = ref({ state: false, message: '' });
 
-onMounted(async () => {
-    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
-
-    userProfile.value = await getUserProfileById(userId, loading, error);
-});
+onMounted(async () => userProfile.value = await getUserProfileById(userId, loading, error));
 </script>  
 
 <template>
@@ -47,11 +38,7 @@ onMounted(async () => {
     </HeaderTitle>
 
     <section class="pb-48 flex flex-col items-center">
-        <div v-if="loading" class="flex items-center justify-center p-4">
-            <p class="text-xl text-center font-semibold">
-                Cargando...
-            </p>
-        </div>
+        <Loader v-if="loading"/>
 
         <template v-else-if="!loading && userProfile?.id">
             <UserProfileComponent :user-profile="userProfile" />

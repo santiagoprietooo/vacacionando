@@ -10,27 +10,30 @@ let loggedUser = {
     displayName: null,
     bio: null,
     traveledTo: null,
+    photoURL: null,
     fullyLoaded: false
 };
 
 let observers = [];
 
-onAuthStateChanged(auth, async user => {
-    if(user){
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
             loggedUser = {
             id: user.uid,
             email: user.email,
             displayName: user.displayName
         }
-        
-        getUserProfileById(user.uid, ref({ value: false }), ref({ value: false }))
+
+        await getUserProfileById(user.uid, ref({ value: false }), ref({ value: false }))
         .then(userProfile => {
             loggedUser = {
                 ...loggedUser,
                 bio: userProfile.bio,
                 traveledTo: userProfile.traveledTo,
+                photoURL: userProfile.photoURL,
                 fullyLoaded: true
             }
+
             notifyAll();
         });
     } else {
@@ -40,6 +43,7 @@ onAuthStateChanged(auth, async user => {
             displayName: null,
             bio: null,
             traveledTo: null,
+            photoURL: null,
             fullyLoaded: false
         }
     }
@@ -65,6 +69,7 @@ export async function newUser({ email, password }) {
             displayName: null,
             bio: null,
             traveledTo: null,
+            photoURL: null,
             fullyLoaded: false
         };
         console.error("[auth.js newUser] Error al tratar de crear la cuenta: ", error);
@@ -83,25 +88,39 @@ export async function login({email, password}) {
 
 /**
  * 
- * @param {{displayName: string, bio: string, traveledTo: string}} data
+ * @param {{displayName: string, bio: string, traveledTo: string, photoURL: string}} data
+ * @param {File} file
  * @returns {Promise<null>}
  */
 
-export async function editMyProfile({displayName, bio, traveledTo}) {
+export async function editMyProfile({displayName, bio, traveledTo, photoURL}, file) {
     try {
-        await updateProfile(auth.currentUser, {displayName});
+        await updateProfile(auth.currentUser, {displayName, photoURL});
 
         if (!bio || bio.trim() === '') {
             bio = null;
         }
 
-        await updateUserProfile(loggedUser.id, {displayName, bio, traveledTo});
+        if (!traveledTo) {
+            traveledTo = null;
+        }
+
+        if (!photoURL) {
+            photoURL = null;
+        }
+
+        if (!file) {
+            file = null;
+        }
+
+        await updateUserProfile(loggedUser.id, {displayName, bio, traveledTo, photoURL}, file);
 
         loggedUser = {
             ...loggedUser,
             displayName,
             bio,
-            traveledTo
+            traveledTo,
+            photoURL
         }
 
         notifyAll();
@@ -116,14 +135,15 @@ export async function logout() {
 }
 
 /**
- * 
  * @param {Function} callback 
+ * @returns {Function}
  */
-
 export function subscribeToAuthChanges(callback) {
     observers.push(callback);
 
     notify(callback);
+
+    return () => { observers = observers.filter(obs => obs !== callback) }
 }
 
 /**

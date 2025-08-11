@@ -5,15 +5,21 @@ import TextInput from '../components/Inputs/TextInput.vue';
 import TextareaInput from '../components/Inputs/TextareaInput.vue';
 import SubmitButton from '../components/Buttons/SubmitButton.vue';
 import AlertMessage from '../components/Messages/AlertMessage.vue';
-import { onMounted, ref } from 'vue';
+import Loader from '../components/Loader/Loader.vue';
+import { UserRound } from 'lucide-vue-next';
+import { onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { editMyProfile, subscribeToAuthChanges } from '../services/auth';
+import { useFileSystemAccess } from '@vueuse/core';
+import { editMyProfile } from '../services/auth';
+import { useLoggedUser } from '../composables/useLoggedUser';
 import { useLoadingState } from '../composables/useLoadingState';
+
+const { loggedUser } = useLoggedUser();
+const { loadingState, cleanLoadingState } = useLoadingState();
 
 const router = useRouter();
 
 const argProvinces = ref([]);
-
 async function getProvinces() {
     try {
         const res = await fetch('/provincias.json');
@@ -27,35 +33,30 @@ async function getProvinces() {
     }
 }
 
-const loggedUser = ref({
-    displayName: '',
-    bio: '',
-    traveledTo: []
+const { open, file: fileSelected } = useFileSystemAccess({
+    types: [{
+        description: 'Imágenes',
+        accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp'] }
+    }]
 });
 
-onMounted(async () => {
-    subscribeToAuthChanges(async (newUserData) => {
-    loggedUser.value = await {
-        ...loggedUser.value,
-        ...newUserData,
-        displayName: !loggedUser.value.displayName && !newUserData.displayName
-            ? newUserData.email.slice(0, newUserData.email.indexOf("@"))
-            : newUserData.displayName
-        ,
-        bio: !loggedUser.value.displayName && !newUserData.displayName
-            ? ''
-            : newUserData.bio
-        ,
-        traveledTo: Array.isArray(newUserData.traveledTo)
-            ? newUserData.traveledTo
-            : []
-    };
+const file = ref({
+    preview: null,
+    photo: null
 });
 
-    await getProvinces();
-});
+watch(fileSelected, (newFile) => {
+    if (!newFile) return;
 
-const { loadingState, cleanLoadingState } = useLoadingState();
+    file.value.photo = newFile;
+
+    const reader = new FileReader();
+    reader.addEventListener('load', () => {
+        file.value.preview = reader.result;
+    });
+
+    reader.readAsDataURL(file.value.photo);
+});
 
 const handleSubmit = async () => {
     loadingState.value = {
@@ -64,7 +65,7 @@ const handleSubmit = async () => {
     };
 
     try {
-        await editMyProfile({ ...loggedUser.value });
+        await editMyProfile({ ...loggedUser.value }, file.value.photo);
 
         loadingState.value = {
             loading: true,
@@ -86,6 +87,17 @@ const handleSubmit = async () => {
         }, 3000);
     }
 }
+
+onMounted(async () => {
+    loadingState.value = {
+        loading: true,
+        state: 'loading_profile'
+    }
+
+    setTimeout(() => { cleanLoadingState() }, 3000)
+
+    await getProvinces();
+});
 </script>
 
 <template>
@@ -99,6 +111,76 @@ const handleSubmit = async () => {
         <h2 class="sr-only">Información actual de la cuenta</h2>
 
         <form @submit.prevent="handleSubmit" class="flex flex-col items-center gap-4">
+            <div class="flex items-end gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
+                <span class="sr-only">Foto de perfil</span>
+
+                <Loader v-if="loadingState.loading && loadingState.state === 'loading_profile'"/>
+
+                <template v-else>
+                    <div
+                        v-if="loggedUser.photoURL && !file.preview"
+                        class="size-[72px] bg-center bg-no-repeat bg-cover rounded-full"
+                        :style="{ backgroundImage: `url(${loggedUser.photoURL})` }"
+                        role="img"
+                        :aria-label="`Foto de perfil del usuario`"
+                    />
+
+                    <div
+                        v-else-if="!loggedUser.photoURL && file.photo || file.preview"
+                        class="size-[72px] bg-center bg-no-repeat bg-cover rounded-full"
+                        :style="{ backgroundImage: `url(${file.preview})` }"
+                        role="img"
+                        :aria-label="`Foto de perfil seleccionada`"
+                    />
+
+                    <div
+                        v-else-if="!loggedUser.photoURL && !file.photo && !file.preview"
+                        class="w-max p-4 bg-white text-slate-900 rounded-full"
+                        role="img"
+                        aria-label="Foto predeterminada del usuario"
+                    >
+                        <UserRound class="size-10"/>
+                    </div>
+                </template>
+
+                <div class="flex items-center gap-1 max-[400px]:flex-col max-[400px]:items-start max-[400px]:gap-2" v-if="!loadingState.loading && loadingState.state !== 'loading_profile'">
+                    <button
+                        type="button"
+                        class="text-slate-400 text-sm outline-none hover:underline focus:underline"
+                        @click="open"
+                    >
+                        {{ !loggedUser.photoURL && !file.photo && !file.preview ?
+                            'Agregar foto de perfil' :
+                            'Editar foto de perfil'
+                        }}
+                    </button>
+
+                    <template v-if="loggedUser.photoURL && !file.preview">
+                        <span class="max-[400px]:hidden text-slate-400 text-sm">·</span>
+
+                        <button
+                            type="button"
+                            class="text-slate-400 text-sm outline-none hover:underline focus:underline"
+                            @click="loggedUser.photoURL = null"
+                        >
+                            Eliminar foto actual
+                        </button>
+                    </template>
+
+                    <template v-if="file.preview">
+                        <span class="max-[400px]:hidden text-slate-400 text-sm">·</span>
+
+                        <button
+                            type="button"
+                            class="text-slate-400 text-sm outline-none hover:underline focus:underline"
+                            @click="file = { preview: null, photo: null }"
+                        >
+                            Eliminar foto seleccionada
+                        </button>
+                    </template>
+                </div>
+            </div>
+
             <TextInput
                 use-for="nombre"
                 text="Nombre"
@@ -116,17 +198,23 @@ const handleSubmit = async () => {
                 :define-limit="500"
             />
 
-            <div class="flex flex-col gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
-                <p class="font-semibold">Viajé a...</p>
-                <div v-for="(location, index) in argProvinces" :key="index">
-                    <label :for="'province-' + index">
-                        <input type="checkbox" v-model="loggedUser.traveledTo" :value="location.province"
-                            :id="'province-' + index" />
+            <template v-if="!argProvinces">
+                <Loader />
+            </template>
 
-                        {{ location.province }}
-                    </label>
+            <template v-else>
+                <div class="flex flex-col gap-1 max-md:w-full md:w-2/3 lg:w-2/4">
+                    <p class="font-semibold">Viajé a...</p>
+                    <div v-for="(location, index) in argProvinces" :key="index">
+                        <label :for="'province-' + index">
+                            <input type="checkbox" v-model="loggedUser.traveledTo" :value="location.province"
+                                :id="'province-' + index" />
+
+                            {{ location.province }}
+                        </label>
+                    </div>
                 </div>
-            </div>
+            </template>
 
             <div class="flex justify-end gap-4 mt-4 max-md:w-full md:w-2/3 lg:w-2/4">
                 <SubmitButton :disabled="loadingState.loading || !loggedUser.displayName || loggedUser.displayName.trim() === ''">

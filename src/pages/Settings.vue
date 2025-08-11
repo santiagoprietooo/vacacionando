@@ -2,22 +2,14 @@
 import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
 import AlertMessage from '../components/Messages/AlertMessage.vue';
-import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { logout, subscribeToAuthChanges } from '../services/auth';
+import { logout } from '../services/auth';
 import { useLoadingState } from '../composables/useLoadingState';
+import { useLoggedUser } from '../composables/useLoggedUser';
 
 const router = useRouter();
 
-const loggedUser = ref({
-    id: null,
-    email: null
-});
-
-onMounted(() => {
-    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
-});
-
+const { loggedUser } = useLoggedUser();
 const { loadingState, cleanLoadingState } = useLoadingState();
 
 const handleLogout = async () => {

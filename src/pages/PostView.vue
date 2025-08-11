@@ -2,21 +2,15 @@
 import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import ReturnBtn from '../components/Buttons/ReturnBtn.vue';
 import PostComponent from '../components/PostComponent.vue';
+import Loader from '../components/Loader/Loader.vue';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { subscribeToAuthChanges } from '../services/auth';
 import { getPostById } from '../services/users-posts';
 import { getUserEmail } from '../services/user-profile';
 import { useLoadingState } from '../composables/useLoadingState';
+import { useLoggedUser } from '../composables/useLoggedUser';
 
-onMounted(() => {
-    subscribeToAuthChanges((newUserData) => loggedUser.value = newUserData);
-});
-
-const loggedUser = ref({
-    id: null,
-    email: null
-});
+const { loggedUser } = useLoggedUser();
 
 const route = useRoute();
 const postID = route.params.id;
@@ -75,11 +69,7 @@ onMounted(async () => {
             :logged-user="loggedUser"
         />
 
-        <div v-else-if="loadingState.loading && loadingState.state === 'loading_post'" class="flex items-center justify-center p-4">
-            <p class="text-xl text-center font-semibold">
-                Cargando...
-            </p>
-        </div>
+        <Loader v-else-if="loadingState.loading && loadingState.state === 'loading_post'" />
 
         <div v-else-if="!loadingState.loading && loadingState.state === 'error_finding_post'" class="flex items-center justify-center p-4">
             <p class="text-xl text-center font-semibold">

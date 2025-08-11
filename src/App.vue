@@ -1,18 +1,10 @@
 <script setup>
 import NavLink from './components/Tags/NavLink.vue';
 import FooterItem from './components/Tags/FooterItem.vue';
-import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
-import { subscribeToAuthChanges } from './services/auth';
+import { useLoggedUser } from './composables/useLoggedUser';
 
-const loggedUser = ref({
-    id: null,
-    email: null
-});
-
-onMounted(() => {
-    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);
-});
+const { loggedUser } = useLoggedUser();
 </script>
 
 <template>
@@ -30,7 +22,7 @@ onMounted(() => {
             </template>
 
             <template v-else>
-                <NavLink nav-to="Perfil"  path="/profile" />
+                <NavLink nav-to="Perfil"  path="/profile" :profile-photo="loggedUser.photoURL"/>
                 <NavLink nav-to="Ajustes" path="/settings" />
             </template>
         </ul>

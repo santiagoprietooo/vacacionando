@@ -14,8 +14,16 @@ defineProps({
 
     <div class="w-full">
         <div class="p-4">
-            <div class="p-6 w-max bg-white rounded-full">
-                <UserRound class="text-black size-12" aria-label="Ícono del usuario" />
+            <div
+                v-if="userProfile?.photoURL && userProfile?.photoURL !== null"
+                class="size-28 bg-center bg-no-repeat bg-cover rounded-full"
+                :style="{ backgroundImage: `url(${userProfile.photoURL})` }"
+                role="img"
+                :aria-label="`Foto de perfil del usuario`"
+            />
+
+            <div v-else class="p-6 w-max bg-white rounded-full">
+                <UserRound class="text-black size-12" aria-label="Foto de perfil del usuario" />
             </div>
         </div>
 

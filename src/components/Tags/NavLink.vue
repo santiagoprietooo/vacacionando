@@ -16,6 +16,10 @@ defineProps({
     path: {
         type: String,
         default: '/'
+    },
+    profilePhoto: {
+        type: String,
+        required: false
     }
 })
 </script>
@@ -39,8 +43,31 @@ defineProps({
                 }"
             />
 
+            <template v-if="navTo === 'Perfil'">
+                <div
+                    v-if="profilePhoto && profilePhoto !== null"
+                    class="size-5 max-lg:size-7 max-lg:p-2 bg-center bg-no-repeat bg-cover rounded-full"
+                    :class="{
+                        'max-lg:bg-white max-lg:text-slate-800 max-lg:rounded-full'
+                        : getRoute(path)
+                    }"
+                    :style="{ backgroundImage: `url(${profilePhoto})` }"
+                    role="img"
+                    :aria-label="`Foto de perfil del usuario`"
+                />
+
+                <User
+                    v-else
+                    class="size-5 max-lg:size-9 max-lg:p-2" 
+                    :class="{
+                        'max-lg:bg-white max-lg:text-slate-800 max-lg:rounded-full'
+                        : getRoute(path)
+                    }"
+                />
+            </template>
+
             <User
-                v-if="navTo === 'Perfil' || navTo === 'Crear Cuenta'"
+                v-if="navTo === 'Crear Cuenta'"
                 class="size-5 max-lg:size-9 max-lg:p-2" 
                 :class="{
                     'max-lg:bg-white max-lg:text-slate-800 max-lg:rounded-full'

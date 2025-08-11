@@ -2,11 +2,12 @@
 import SubmitButton from './Buttons/SubmitButton.vue';
 import CloseButton from './Buttons/CloseButton.vue';
 import AlertMessage from './Messages/AlertMessage.vue';
+import Loader from './Loader/Loader.vue';
 import { MapPin, SendHorizontal, UserRound, X } from 'lucide-vue-next';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { saveComment, subscribeToComments } from '../services/comments';
-import { getUserEmail } from '../services/user-profile';
+import { getUserEmail, getUserPhotoURL } from '../services/user-profile';
 import { useLoadingState } from '../composables/useLoadingState';
 
 const props = defineProps({
@@ -81,6 +82,17 @@ async function showUsersEmail(id) {
     }
 }
 
+const usersPhotoURL = ref([]);
+
+async function showUsersPhoto(id) {
+    const alreadyExists = usersPhotoURL.value.find((u) => u.user_id === id);
+
+    if (!alreadyExists) {
+        const photoURL = await getUserPhotoURL(id);
+        usersPhotoURL.value.push({ id, photoURL });
+    }
+}
+
 const openedImage = ref('');
 function openIMG(img) {
     if (!img) return;
@@ -90,11 +102,13 @@ function openIMG(img) {
 
 let unsubscribeComments = null;
 
-onMounted(() => {
+onMounted(async () => {
     loadingState.value = {
         loading: true,
         state: 'loading_comments'
     }
+
+    await showUsersPhoto(props.post.user_id);
 
     unsubscribeComments = subscribeToComments(postID, async (newComments) => {
         comments.value = await newComments;
@@ -122,9 +136,17 @@ onBeforeUnmount(() => {
         <div class="flex flex-row items-center gap-2 w-max hover:underline">
             <template v-if="loggedUser.id === post?.user_id">
                 <RouterLink to="/profile" class="rounded-full">
-                    <span class="flex flex-col items-center justify-center rounded-full bg-white size-10">
+                    <span v-if="!usersPhotoURL.find((u) => u.id === post.user_id)?.photoURL" class="flex flex-col items-center justify-center rounded-full bg-white size-10">
                         <UserRound class="text-black" />
                     </span>
+
+                    <div
+                        v-else
+                        class="size-10 max-lg:p-2 bg-center bg-no-repeat bg-cover rounded-full"
+                        :style="{ backgroundImage: `url(${usersPhotoURL.find((u) => u.id === post.user_id)?.photoURL})` }"
+                        role="img"
+                        :aria-label="`Foto de perfil de ${post.user_email}`"
+                    />
                 </RouterLink>
 
                 <h2 class="flex items-center">
@@ -136,9 +158,17 @@ onBeforeUnmount(() => {
 
             <template v-else>
                 <RouterLink :to="{ name: 'profile', params: { id: post?.user_id } }" class="rounded-full">
-                    <span class="flex flex-col items-center justify-center rounded-full bg-white size-10">
+                    <span v-if="!usersPhotoURL.find((u) => u.id === post.user_id)?.photoURL" class="flex flex-col items-center justify-center rounded-full bg-white size-10">
                         <UserRound class="text-black" />
                     </span>
+
+                    <div
+                        v-else
+                        class="size-10 max-lg:p-2 bg-center bg-no-repeat bg-cover rounded-full"
+                        :style="{ backgroundImage: `url(${usersPhotoURL.find((u) => u.id === post.user_id)?.photoURL})` }"
+                        role="img"
+                        :aria-label="`Foto de perfil de ${post.user_email}`"
+                    />
                 </RouterLink>
 
                 <h2 class="flex items-center">
@@ -270,7 +300,7 @@ onBeforeUnmount(() => {
                     :key="comment.id"
                 >
                     <div class="w-full">
-                        <template v-if="loggedUser.id === post?.user_id">
+                        <template v-if="loggedUser.id === comment?.user_id">
                             <h3 class="flex items-center">
                                 <RouterLink to="/profile" class="text-xl font-bold outline-none hover:underline focus:underline max-sm:max-w-[200px] max-sm:truncate">
                                     {{ userNames.find((user) => user.id === comment.user_id)?.email }}
@@ -306,11 +336,7 @@ onBeforeUnmount(() => {
         </template>
 
         <template v-else-if="!comments && loadingState.loading && loadingState.state === 'loading_comments'">
-            <div class="flex items-center justify-center p-4">
-                <p class="text-xl text-center font-semibold">
-                    Cargando...
-                </p>
-            </div>
+            <Loader />
         </template>
 
         <template v-else>

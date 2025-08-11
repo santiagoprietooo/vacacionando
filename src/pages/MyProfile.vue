@@ -2,22 +2,12 @@
 import HeaderTitle from '../components/Tags/HeaderTitle.vue';
 import ReturnBtn from "../components/Buttons/ReturnBtn.vue";
 import UserProfileComponent from '../components/UserProfileComponent.vue';
+import Loader from '../components/Loader/Loader.vue';
 import { Pencil } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
-import { subscribeToAuthChanges } from '../services/auth';
+import { useLoggedUser } from '../composables/useLoggedUser';
 
-const loggedUser = ref({
-    id: null,
-    email: null,
-    displayName: null,
-    bio: null,
-    traveledTo: null,
-});
-
-onMounted(() => {
-    subscribeToAuthChanges(async (newUserData) => loggedUser.value = await newUserData);  
-});
+const { loggedUser } = useLoggedUser();
 </script>
 
 <template>
@@ -39,11 +29,7 @@ onMounted(() => {
 
     <section class="pb-48">
         <template v-if="!loggedUser">
-            <div class="flex items-center justify-center p-4">
-                <p class="text-xl text-center font-semibold">
-                    Cargando...
-                </p>
-            </div>
+            <Loader />
         </template>
 
         <template v-else>

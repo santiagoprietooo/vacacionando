@@ -21,7 +21,7 @@ export async function savePublicPost({ title, description, location }, file) {
   let imageURL;
 
   if (!file) {
-    file = null;
+    imageURL = null;
   } else {
     const fileName = `${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from('post-images').upload(fileName, file);
@@ -40,7 +40,7 @@ export async function savePublicPost({ title, description, location }, file) {
   await addDoc(usersPosts, {
     title,
     description,
-    photo: !file ? null : imageURL,
+    photo: imageURL,
     location,
     comments: [],
     user_id: user.uid,
